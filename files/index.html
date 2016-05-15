@@ -1,0 +1,19 @@
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <script type="text/javascript" src="https://raw.githubusercontent.com/stackp/promisejs/master/promise.min.js"></script>
+  <script type="text/javascript" src="https://fb.me/react-15.0.1.js"></script>
+  <script type="text/javascript" src="https://fb.me/react-dom-15.0.1.js"></script>
+  <script type="text/javascript" src="/add_channel.js"></script>
+  <script type="text/javascript" src="/channel_item.js"></script>
+  <script type="text/javascript" src="/content.js"></script>
+</head>
+<body>
+  <div id="main"></div>
+  <script type="text/javascript">
+    ReactDOM.render(React.createElement(Content, null),
+      document.getElementById("main"));
+  </script>
+</body>
+</html>
