@@ -2,7 +2,14 @@ GEM
   remote: https://rubygems.org/
   specs:
     cargobull (0.3.0)
+    daemons (1.2.3)
+    eventmachine (1.2.0.1)
+    rack (1.6.4)
     redis (3.2.2)
+    thin (1.6.4)
+      daemons (~> 1.0, >= 1.0.9)
+      eventmachine (~> 1.0, >= 1.0.4)
+      rack (~> 1.0)
 
 PLATFORMS
   ruby
@@ -10,6 +17,7 @@ PLATFORMS
 DEPENDENCIES
   cargobull
   redis
+  thin
 
 BUNDLED WITH
    1.11.2
