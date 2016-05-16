@@ -1,6 +1,8 @@
 
 module Talk
-  REDIS = Redis.new(host: ENV["REDIS_URL"], db: 0)
+  REDIS_URI = URI.parse(ENV["REDIS_URL"] || "redis://localhost:6379/")
+  REDIS = Redis.new(host: REDIS_URI.host, port: REDIS_URI.port, db: 0,
+    password: REDIS_URI.password)
 
   def self.read(params)
     { status: 200, body: REDIS.sort("channels", order: "alpha") }
