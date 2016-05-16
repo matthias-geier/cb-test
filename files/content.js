@@ -1,6 +1,6 @@
 var Content = React.createClass({displayName: "Content",
   getInitialState: function() {
-    return { channels: [], errors: [] };
+    return { errors: [] };
   },
   withState: function(key, func) {
     var state = this.state;
@@ -11,14 +11,6 @@ var Content = React.createClass({displayName: "Content",
     return function() {
       this.withState(key, func);
     }.bind(this);
-  },
-  updateChannels: function() {
-    promise.get("/api/talk").then(function(err, text, xhr) {
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
-        this.withState("channels", function() { return payload.body; });
-      }
-    }.bind(this));
   },
   addError: function(err) {
     this.withState("errors", function(list) {
@@ -32,35 +24,57 @@ var Content = React.createClass({displayName: "Content",
       return list.slice(1);
     }));
   },
-  componentDidMount: function() {
-    this.updateChannels();
+  reqUrl: function() {
+    return window.location.href.toString().split(window.location.host)[1].
+      split("#")[0];
   },
+  dispatch: function(routes, split) {
+    var next = (split.length === 0) ? "_" : split[0];
+    var rest = split.slice(1);
+    if (!routes[next] && !routes["*"]) { return null; }
+    else {
+      var subroute = routes[next];
+      if (!subroute && !routes["*"]) { return null; }
+      else if (!subroute) { subroute = routes["*"]; }
+
+      if (subroute["_"]) {
+        return this.dispatch(subroute, rest);
+      } else { return subroute; }
+    }
+  },
+  route: function(opts) {
+    var split = this.reqUrl().split("/").slice(1);
+    var routes = {
+      "_": React.createElement(Universes, {opts: opts}),
+      universe: {
+        "_": React.createElement(Universes, {opts: opts}),
+        "*": {
+          "_": React.createElement(Universe, {opts: opts}),
+          story: React.createElement(Stories, {opts: opts})
+        }
+      }
+    };
+    return this.dispatch(routes, split) || routes["universe"]["_"];
+  },
+  reroute: function(url, title) {
+    window.history.pushState({}, title, url);
+    this.forceUpdate();
+  },
+
   errors: function() {
     return this.state.errors.map(function(err, i) {
       return React.createElement("p", {key: i, className: "bg-danger"}, err);
     }.bind(this));
   },
-  channels: function(opts) {
-    if (this.state.channels.length === 0) {
-      return "No channels found";
-    }
-    return React.createElement("ul", null, 
-      this.state.channels.map(function(elem) {
-        return React.createElement(ChannelItem, {key: elem, name: elem, opts: opts});
-      }.bind(this))
-    );
-  },
   render: function() {
     var opts = {
       withState: this.withState,
       addError: this.addError,
-      updateChannels: this.updateChannels
+      reroute: this.reroute
     };
     return React.createElement("div", {className: "container"}, 
-      React.createElement("h2", null, "Channels"), 
       this.errors(), 
-      React.createElement(AddChannel, {opts: opts}), 
-      this.channels(opts)
+      this.route(opts)
     );
   }
 });
