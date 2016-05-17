@@ -17,7 +17,7 @@ module Story
   end
 
   def list(uid)
-    $redis.zrange(list_key(uid), 0, -1)
+    $redis.zrange(list_key(uid), 0, -1).map { |id| to_h(id, false) }
   end
 
   def exists?(uid, id)
@@ -60,13 +60,14 @@ module Story
     $redis.hset(id, "updated_at", Time.now.to_i)
   end
 
-  def to_h(id)
+  def to_h(id, full = true)
     db_hash = $redis.hgetall(id)
     db_hash["id"] = id
     db_hash["updated_at"] = Time.at(db_hash["updated_at"].to_i).utc
+    return db_hash unless full
+
     db_hash["poses"] = $redis.zrange(pose_key(id), 0, -1, with_scores: true).
       reduce([]) { |acc, (pose, key)| acc << [key.to_i, pose] }
-
     return db_hash
   end
 

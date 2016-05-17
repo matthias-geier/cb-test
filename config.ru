@@ -56,11 +56,14 @@ class UniverseApi < Grape::API
       {status: 200, body: Universe.create}
     end
 
-    #params do
-    #  requires :id, type: String, desc: "Universe id"
-    #end
-    #put ":id" do
-    #end
+    params do
+      requires :id, type: String, desc: "Universe id"
+      optional :title, type: String, desc: "Story title"
+    end
+    put ":id" do
+      validate_uid!
+      {status: 200, body: Universe.update(params[:id], declared(params))}
+    end
 
     params do
       requires :id, type: String, desc: "Universe id"

@@ -28,37 +28,14 @@ var Content = React.createClass({displayName: "Content",
     return window.location.href.toString().split(window.location.host)[1].
       split("#")[0];
   },
-  dispatch: function(routes, split) {
-    var next = (split.length === 0) ? "_" : split[0];
-    var rest = split.slice(1);
-    if (!routes[next] && !routes["*"]) { return null; }
-    else {
-      var subroute = routes[next];
-      if (!subroute && !routes["*"]) { return null; }
-      else if (!subroute) { subroute = routes["*"]; }
-
-      if (subroute["_"]) {
-        return this.dispatch(subroute, rest);
-      } else { return subroute; }
-    }
-  },
-  route: function(opts) {
-    var split = this.reqUrl().split("/").slice(1);
-    var routes = {
-      "_": React.createElement(Universes, {opts: opts}),
-      universe: {
-        "_": React.createElement(Universes, {opts: opts}),
-        "*": {
-          "_": React.createElement(Universe, {opts: opts}),
-          story: React.createElement(Stories, {opts: opts})
-        }
-      }
-    };
-    return this.dispatch(routes, split) || routes["universe"]["_"];
-  },
   reroute: function(url, title) {
     window.history.pushState({}, title, url);
     this.forceUpdate();
+  },
+
+  getUniverse: function() {
+    var match = this.reqUrl().match("^\/universe\/([^\/]+)");
+    return match ? match[1] : undefined;
   },
 
   errors: function() {
@@ -70,11 +47,14 @@ var Content = React.createClass({displayName: "Content",
     var opts = {
       withState: this.withState,
       addError: this.addError,
+      reqUrl: this.reqUrl,
       reroute: this.reroute
     };
+    var universe = this.getUniverse();
     return React.createElement("div", {className: "container"}, 
+      React.createElement(Universes, {opts: opts}), 
       this.errors(), 
-      this.route(opts)
+      universe ? React.createElement(Universe, {id: universe, opts: opts}) : React.createElement("div", null)
     );
   }
 });
