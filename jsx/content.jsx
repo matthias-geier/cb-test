@@ -54,7 +54,11 @@ var Content = React.createClass({
     return <div className="container">
       <Universes opts={opts} />
       {this.errors()}
-      {universe ? <Universe id={universe} opts={opts} /> : <div />}
+      {
+        universe ?
+          <Universe id={universe} opts={opts} /> :
+          <div />
+      }
     </div>;
   }
 });

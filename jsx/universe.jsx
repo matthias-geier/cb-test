@@ -27,7 +27,7 @@ var Universes = React.createClass({
     e.preventDefault();
   },
   hrefHandler: function(e) {
-    var universe = e.target.innerHTML;
+    var universe = e.target.dataset.id;
     this.props.opts.reroute("/universe/" + universe, universe);
     e.preventDefault();
   },
@@ -44,7 +44,9 @@ var Universes = React.createClass({
       <ul>
       {this.state.universes.map(function(elem) {
         return <li key={elem.id}>
-          <a href="#" onClick={this.hrefHandler}>{elem.title || elem.id}</a>
+          <a href="#" onClick={this.hrefHandler} data-id={elem.id}>
+            {elem.title || elem.id}
+          </a>
         </li>;
       }.bind(this))}
       </ul>
@@ -96,10 +98,11 @@ var Universe = React.createClass({
 
     var universe = this.state.universe;
     return <div>
-      <h3>{universe.name || universe.id}</h3>
+      <h3>{universe.title || universe.id}</h3>
 
       <form className="form-inline" onSubmit={this.updateHandler}>
-        <input placeholder="Universe title" ref="title" />
+        <input placeholder="Universe title" ref="title"
+          defaultValue={universe.title} />
         <input type="submit" className="btn btn-default" value="Update" />
       </form>
 

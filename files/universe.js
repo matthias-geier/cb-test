@@ -27,8 +27,9 @@ var Universes = React.createClass({displayName: "Universes",
     e.preventDefault();
   },
   hrefHandler: function(e) {
-    var universe = e.target.innerHTML;
+    var universe = e.target.dataset.id;
     this.props.opts.reroute("/universe/" + universe, universe);
+    this.forceUpdate();
     e.preventDefault();
   },
   componentDidMount: function() {
@@ -44,7 +45,9 @@ var Universes = React.createClass({displayName: "Universes",
       React.createElement("ul", null, 
       this.state.universes.map(function(elem) {
         return React.createElement("li", {key: elem.id}, 
-          React.createElement("a", {href: "#", onClick: this.hrefHandler}, elem.title || elem.id)
+          React.createElement("a", {href: "#", onClick: this.hrefHandler, "data-id": elem.id}, 
+            elem.title || elem.id
+          )
         );
       }.bind(this))
       )
@@ -86,6 +89,7 @@ var Universe = React.createClass({displayName: "Universe",
   hrefHandler: function(e) {
     var universe = e.target.innerHTML;
     this.props.opts.reroute("/universe/" + universe, universe);
+    this.forceUpdate();
     e.preventDefault();
   },
   componentDidMount: function() {
@@ -96,10 +100,11 @@ var Universe = React.createClass({displayName: "Universe",
 
     var universe = this.state.universe;
     return React.createElement("div", null, 
-      React.createElement("h3", null, universe.name || universe.id), 
+      React.createElement("h3", null, universe.title || universe.id), 
 
       React.createElement("form", {className: "form-inline", onSubmit: this.updateHandler}, 
-        React.createElement("input", {placeholder: "Universe title", ref: "title"}), 
+        React.createElement("input", {placeholder: "Universe title", ref: "title", 
+          defaultValue: universe.title}), 
         React.createElement("input", {type: "submit", className: "btn btn-default", value: "Update"})
       ), 
 

@@ -54,7 +54,11 @@ var Content = React.createClass({displayName: "Content",
     return React.createElement("div", {className: "container"}, 
       React.createElement(Universes, {opts: opts}), 
       this.errors(), 
-      universe ? React.createElement(Universe, {id: universe, opts: opts}) : React.createElement("div", null)
+      
+        universe ?
+          React.createElement(Universe, {id: universe, opts: opts}) :
+          React.createElement("div", null)
+      
     );
   }
 });
