@@ -96,7 +96,8 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :id, type: String, desc: "Unique character id"
+          requires :id, type: String, regexp: /\A[a-z_]+\z/,
+            desc: "Unique character id"
         end
         post do
           if Character.exists?(params[:uid], params[:id])
