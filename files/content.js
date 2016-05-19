@@ -1,6 +1,6 @@
 var Content = React.createClass({displayName: "Content",
   getInitialState: function() {
-    return { errors: [] };
+    return { errors: [], last_render: Math.floor(Date.now() / 1000) };
   },
   withState: function(key, func) {
     var state = this.state;
@@ -28,37 +28,31 @@ var Content = React.createClass({displayName: "Content",
     return window.location.href.toString().split(window.location.host)[1].
       split("#")[0];
   },
-  reroute: function(url, title) {
-    window.history.pushState({}, title, url);
-    this.forceUpdate();
-  },
-
-  getUniverse: function() {
-    var match = this.reqUrl().match("^\/universe\/([^\/]+)");
-    return match ? match[1] : undefined;
-  },
-
+  //reroute: function(url, title) {
+  //  window.history.pushState({}, title, url);
+  //  this.forceUpdate();
+  //},
   errors: function() {
     return this.state.errors.map(function(err, i) {
       return React.createElement("p", {key: i, className: "bg-danger"}, err);
     }.bind(this));
   },
+  componentDidMount: function() {
+    window.onpopstate = function(e) {
+      this.withState("last_render", function() {
+        return Math.floor(Date.now() / 1000);
+      });
+    }.bind(this)
+  },
   render: function() {
     var opts = {
       withState: this.withState,
       addError: this.addError,
-      reqUrl: this.reqUrl,
-      reroute: this.reroute
+      reqUrl: this.reqUrl
     };
-    var universe = this.getUniverse();
     return React.createElement("div", {className: "container"}, 
-      React.createElement(Universes, {opts: opts}), 
       this.errors(), 
-      
-        universe ?
-          React.createElement(Universe, {id: universe, opts: opts}) :
-          React.createElement("div", null)
-      
+      React.createElement(Universes, {key: this.state.last_render, opts: opts})
     );
   }
 });

@@ -48,7 +48,11 @@ var Universes = React.createClass({
   hrefHandler: function(e) {
     e.preventDefault();
     var universe = e.target.dataset.id;
-    this.props.opts.reroute("/universe/" + universe, universe);
+    var url = "/universe/" + universe;
+    window.history.pushState({}, e.target.innerHTML, url);
+    var state = this.state;
+    state.universe = universe;
+    this.setState(state);
   },
   componentDidMount: function() {
     this.update();
@@ -59,7 +63,8 @@ var Universes = React.createClass({
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateUniverses: this.update
+      updateUniverses: this.update,
+      updateUniverse: this.updateUniverse
     };
     return <div>
       <h2>Universes</h2>
@@ -69,15 +74,17 @@ var Universes = React.createClass({
       </form>
       <ul>
       {this.state.universes.map(function(elem) {
-        return <li key={elem.id}>
-          <a href="#" onClick={this.hrefHandler} data-id={elem.id}>
+        return <li key={elem.id+elem.title}>
+          <a href={"/universe/" + elem.id} onClick={this.hrefHandler}
+            data-id={elem.id}>
             {elem.title || elem.id}
           </a>
         </li>;
       }.bind(this))}
       </ul>
       { this.state.universe ?
-        <Universe opts={opts} id={this.state.universe} /> :
+        <Universe opts={opts} id={this.state.universe}
+          key={this.state.universe}/> :
         "" }
     </div>;
   }
@@ -106,6 +113,7 @@ var Universe = React.createClass({
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
+        this.props.opts.updateUniverse();
         this.props.opts.updateUniverses();
         this.setState(payload.body);
       } else {
@@ -113,32 +121,43 @@ var Universe = React.createClass({
       }
     }.bind(this));
   },
-  hrefHandler: function(e) {
-    var universe = e.target.innerHTML;
-    this.props.opts.reroute("/universe/" + universe, universe);
+  charHrefHandler: function(e) {
     e.preventDefault();
+    var char = e.target.innerHTML;
+    var url = "/universe/" + this.props.id + "/character/" + char;
+    window.history.pushState({}, char, url);
+    var state = this.state;
+    state.character = char;
+    this.setState(state);
   },
   componentDidMount: function() {
     this.update();
   },
   render: function() {
-    if (this.state.length === 0) { return <div />; }
+    if (Object.keys(this.state).length === 0) { return <div />; }
 
     var universe = this.state;
     return <div>
       <h3>{universe.title || universe.id}</h3>
 
       <form className="form-inline" onSubmit={this.updateHandler}>
-        <input placeholder="Universe title" ref="title"
+        <input className="form-control" placeholder="Universe title" ref="title"
           defaultValue={universe.title} />
         <input type="submit" className="btn btn-default" value="Update" />
       </form>
 
       <div>
         {universe.characters.map(function(elem) {
-          return <a href="#">{elem}</a>;
+          return <a href={"/universe/" + this.props.id + "/character/" + elem}
+            onClick={this.charHrefHandler}>
+            {elem}
+          </a>;
         }.bind(this))}
       </div>
+      { this.state.character ?
+        <Character opts={opts} uid={this.props.id} id={this.state.character}
+          key={this.state.character} /> :
+        "" }
     </div>;
   }
 });
