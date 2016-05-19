@@ -12,29 +12,55 @@ var Universes = React.createClass({
       }
     }.bind(this));
   },
+  updateUniverse: function() {
+    var state = this.state;
+    var match = this.props.opts.reqUrl().match("^\/universe\/([^\/]+)");
+    if (match) {
+      if (match[1] !== state.universe) {
+        state.universe = match[1];
+        this.setState(state);
+      }
+    } else {
+      if ("universe" in state) {
+        delete(state.universe);
+        this.setState(state);
+      }
+    }
+  },
   clickHandler: function(e) {
-    console.log(e.target);
+    e.preventDefault();
     promise.post("/api/universe", undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
+        window.history.pushState({}, payload.body.id,
+          "/universe/" + payload.body.id);
         this.update();
+        var state = this.state;
+        state.universe = payload.body.id;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body);
       }
     }.bind(this));
-    e.preventDefault();
   },
   hrefHandler: function(e) {
+    e.preventDefault();
     var universe = e.target.dataset.id;
     this.props.opts.reroute("/universe/" + universe, universe);
-    e.preventDefault();
   },
   componentDidMount: function() {
     this.update();
+    this.updateUniverse();
   },
   render: function() {
+    var opts = {
+      withState: this.props.opts.withState,
+      addError: this.props.opts.addError,
+      reqUrl: this.props.opts.reqUrl,
+      updateUniverses: this.update
+    };
     return <div>
       <h2>Universes</h2>
       <form className="form-inline">
@@ -50,6 +76,9 @@ var Universes = React.createClass({
         </li>;
       }.bind(this))}
       </ul>
+      { this.state.universe ?
+        <Universe opts={opts} id={this.state.universe} /> :
+        "" }
     </div>;
   }
 });
@@ -62,14 +91,11 @@ var Universe = React.createClass({
     promise.get("/api/universe/" + this.props.id).
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
-      var state = this.state;
       if (payload.status === 200) {
-        state.universe = payload.body;
+        this.setState(payload.body);
       } else {
-        state = {};
         this.props.opts.addError(payload.body);
       }
-      this.setState(state);
     }.bind(this));
   },
   updateHandler: function(e) {
@@ -80,6 +106,8 @@ var Universe = React.createClass({
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
+        this.props.opts.updateUniverses();
+        this.setState(payload.body);
       } else {
         this.props.opts.addError(payload.body);
       }
@@ -94,9 +122,9 @@ var Universe = React.createClass({
     this.update();
   },
   render: function() {
-    if (!this.state.universe) { return <div />; }
+    if (this.state.length === 0) { return <div />; }
 
-    var universe = this.state.universe;
+    var universe = this.state;
     return <div>
       <h3>{universe.title || universe.id}</h3>
 
