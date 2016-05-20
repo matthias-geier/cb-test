@@ -135,6 +135,12 @@ var Universe = React.createClass({
   },
   render: function() {
     if (Object.keys(this.state).length === 0) { return <div />; }
+    var opts = {
+      withState: this.props.opts.withState,
+      addError: this.props.opts.addError,
+      reqUrl: this.props.opts.reqUrl,
+      updateUniverse: this.update
+    };
 
     var universe = this.state;
     return <div>
