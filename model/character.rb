@@ -1,6 +1,8 @@
 module Character
   extend self
 
+  FIELDS = %w(id uid cid updated_at)
+
   LIST_SUFFIX = "_characters"
 
   def list_key(uid)
@@ -28,6 +30,10 @@ module Character
   def update(uid, cid, fields)
     fields.delete(:cid)
     id = "#{uid}_#{cid}"
+    ($redis.hgetall(id).keys - FIELDS - fields.keys).each do |field|
+      $redis.hdel(id, field)
+    end
+
     fields.each do |field, value|
       if value.nil? || value.empty?
         $redis.hdel(id, field)

@@ -105,6 +105,22 @@ var Universe = React.createClass({
       }
     }.bind(this));
   },
+  updateCharacter: function() {
+    var state = this.state;
+    var match = this.props.opts.reqUrl().
+      match("^\/universe\/[^\/]+\/character\/([^\/]+)");
+    if (match) {
+      if (match[1] !== state.character) {
+        state.character = match[1];
+        this.setState(state);
+      }
+    } else {
+      if ("character" in state) {
+        delete(state.character);
+        this.setState(state);
+      }
+    }
+  },
   updateHandler: function(e) {
     e.preventDefault();
     promise.put("/api/universe/" + this.props.id,
@@ -132,14 +148,16 @@ var Universe = React.createClass({
   },
   componentDidMount: function() {
     this.update();
+    this.updateCharacter();
   },
   render: function() {
-    if (Object.keys(this.state).length === 0) { return <div />; }
+    if (!this.state.id) { return <div />; }
     var opts = {
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateUniverse: this.update
+      updateUniverse: this.update,
+      updateCharacter: this.updateCharacter
     };
 
     var universe = this.state;
