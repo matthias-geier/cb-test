@@ -1,3 +1,145 @@
+var Characters = React.createClass({displayName: "Characters",
+  getInitialState: function() {
+    return {};
+  },
+  updateCharacter: function() {
+    var state = this.state;
+    var match = this.props.opts.reqUrl().
+      match("^\/universe\/[^\/]+\/character\/([^\/]+)");
+    if (match) {
+      if (match[1] !== state.character) {
+        state.character = match[1];
+        this.setState(state);
+      }
+    } else {
+      if ("character" in state) {
+        delete(state.character);
+        this.setState(state);
+      }
+    }
+  },
+  toggleNewHandler: function(e) {
+    e.preventDefault();
+    this.toggleNew();
+  },
+  toggleNew: function() {
+    var state = this.state;
+    if (state.create_new) {
+      delete(state.create_new);
+    } else {
+      state.create_new = true;
+    }
+    this.setState(state);
+  },
+  closeCharacterIf: function(character) {
+    if (character && this.state.character !== character) {
+      return;
+    }
+    window.history.pushState({}, this.props.uid,
+      "/universe/" + this.props.uid);
+    this.updateCharacter();
+  },
+  charHrefHandler: function(e) {
+    e.preventDefault();
+    var char = e.target.innerHTML;
+    var url = "/universe/" + this.props.uid + "/character/" + char;
+    window.history.pushState({}, char, url);
+    var state = this.state;
+    state.character = char;
+    this.setState(state);
+  },
+  createNewHandler: function(e) {
+    e.preventDefault();
+    var char = this.refs.id.value;
+    var url = "/universe/" + this.props.uid + "/character";
+    promise.post("/api" + url, JSON.stringify({id: char}),
+      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (payload.status === 200) {
+        window.history.pushState({}, char, url + "/" + char);
+        var state = this.state;
+        state.characters.push(char);
+        this.setState(state);
+        this.toggleNew();
+        this.updateCharacter();
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
+  },
+  destroyHandler: function(e) {
+    e.preventDefault();
+    var char = e.currentTarget.dataset.character;
+    var url = "/universe/" + this.props.uid + "/character/" + char;
+    promise.del("/api" + url, undefined,
+      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (payload.status === 200) {
+        this.closeCharacterIf(char);
+        var state = this.state;
+        state.characters.splice(state.characters.indexOf(char), 1);
+        this.setState(state);
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
+  },
+  componentWillMount: function() {
+    var state = this.state;
+    state.characters = this.props.characters;
+    this.setState(state);
+  },
+  componentDidMount: function() {
+    this.updateCharacter();
+  },
+  renderCharList: function() {
+    return this.state.characters.map(function(elem, i) {
+      return React.createElement("li", {key: elem+i}, 
+        React.createElement("a", {href: "/universe/" + this.props.id + "/character/" + elem, 
+          onClick: this.charHrefHandler}, elem), 
+        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
+          "data-character": elem}, 
+          React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+        )
+      );
+    }.bind(this));
+  },
+  renderNew: function() {
+    return React.createElement("form", {className: "form-inline", onSubmit: this.createNewHandler}, 
+      React.createElement("input", {className: "form-control", ref: "id", 
+        placeholder: "id (only a-z and _)"}), 
+      React.createElement("input", {type: "submit", className: "btn btn-default", value: "Create"})
+    );
+  },
+  render: function() {
+    var opts = {
+      withState: this.props.opts.withState,
+      addError: this.props.opts.addError,
+      reqUrl: this.props.opts.reqUrl,
+      updateCharacter: this.updateCharacter
+    };
+    return React.createElement("div", null, 
+      React.createElement("h3", {style: {display: "inline-block"}}, "Characters"), 
+      React.createElement("form", {className: "form-inline", style: 
+        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
+        React.createElement("button", {type: "submit", className: "btn btn-default", 
+          onClick: this.toggleNewHandler}, 
+          React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
+        )
+      ), 
+       this.state.create_new ? this.renderNew() : React.createElement("div", null), 
+
+      React.createElement("ul", {className: "list-unstyled"}, this.renderCharList()), 
+       this.state.character ?
+        React.createElement(Character, {opts: opts, uid: this.props.uid, id: this.state.character, 
+          key: this.state.character}) :
+        ""
+    );
+  }
+});
+
 var Character = React.createClass({displayName: "Character",
   getInitialState: function() {
     return {};
@@ -12,7 +154,7 @@ var Character = React.createClass({displayName: "Character",
       if (payload.status === 200) {
         this.setState(payload.body);
       } else {
-        this.props.opts.addError(payload.body);
+        this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
   },
@@ -45,14 +187,18 @@ var Character = React.createClass({displayName: "Character",
         this.setState(payload.body);
         this.filterUnused(Object.keys(payload.body));
       } else {
-        this.props.opts.addError(payload.body);
+        this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
   },
   addFieldHandler: function(e) {
     e.preventDefault();
     var state = this.state;
-    state["new field"] = "";
+    for(var i = 1; ; i++) {
+      if (Object.keys(state).indexOf("new field " + i) > -1) { continue; }
+      state["new field " + i] = "";
+      break;
+    }
     this.setState(state);
   },
   componentDidMount: function() {
@@ -75,7 +221,7 @@ var Character = React.createClass({displayName: "Character",
   renderPlain: function() {
     return React.createElement("table", {className: "table table-hover"}, React.createElement("tbody", null, 
       this.editableFields().map(function(key) {
-        return React.createElement("tr", null, React.createElement("td", null, key), React.createElement("td", null, this.state[key]));
+        return React.createElement("tr", {key: key}, React.createElement("td", null, key), React.createElement("td", null, this.state[key]));
       }.bind(this))
     ));
   },
@@ -92,7 +238,9 @@ var Character = React.createClass({displayName: "Character",
         }.bind(this))
       )), 
       React.createElement("button", {type: "submit", className: "btn btn-default", 
-        onClick: this.addFieldHandler}, "+"), 
+        onClick: this.addFieldHandler}, 
+        React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
+      ), 
       React.createElement("input", {type: "submit", className: "btn btn-default", value: "Save"})
     );
   },
@@ -102,7 +250,9 @@ var Character = React.createClass({displayName: "Character",
     var char = this.state;
     return React.createElement("div", null, 
       React.createElement("h3", null, char.cid, " ", React.createElement("button", {type: "submit", className: "btn btn-default", 
-        onClick: this.toggleEdit}, "edit")), 
+        onClick: this.toggleEdit}, 
+        React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+      )), 
       this.state.editable ? this.renderEditable() : this.renderPlain()
     );
   }

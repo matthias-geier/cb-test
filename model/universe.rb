@@ -41,7 +41,7 @@ module Universe
 
   def delete(id)
     return false unless exists?(id)
-    Character.list(id).each { |sid| Character.delete(sid) }
+    Character.list(id).each { |sid| Character.delete(id, sid) }
     $redis.del(Character.list_key(id))
     Story.list(id).each { |sid| Story.delete(sid) }
     $redis.del(Story.list_key(id))

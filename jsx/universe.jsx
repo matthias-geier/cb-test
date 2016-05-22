@@ -2,6 +2,13 @@ var Universes = React.createClass({
   getInitialState: function() {
     return { universes: [] };
   },
+  closeUniverseIf: function(universe) {
+    if (universe && this.state.universe !== universe) {
+      return;
+    }
+    window.history.pushState({}, "/", "/");
+    this.updateUniverse();
+  },
   update: function() {
     promise.get("/api/universe").then(function(err, text, xhr) {
       var payload = JSON.parse(text);
@@ -41,7 +48,7 @@ var Universes = React.createClass({
         state.universe = payload.body.id;
         this.setState(state);
       } else {
-        this.props.opts.addError(payload.body);
+        this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
   },
@@ -53,6 +60,22 @@ var Universes = React.createClass({
     var state = this.state;
     state.universe = universe;
     this.setState(state);
+  },
+  destroyHandler: function(e) {
+    e.preventDefault();
+    var universe = e.currentTarget.dataset.universe;
+    var url = "/universe/" + universe;
+    promise.del("/api" + url, undefined,
+      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (payload.status === 200) {
+        this.closeUniverseIf(universe);
+        this.update();
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
   },
   componentDidMount: function() {
     this.update();
@@ -67,10 +90,13 @@ var Universes = React.createClass({
       updateUniverse: this.updateUniverse
     };
     return <div>
-      <h2>Universes</h2>
-      <form className="form-inline">
+      <h2 style={{display: "inline-block"}}>Universes</h2>
+      <form className="form-inline" style={
+        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
-          onClick={this.clickHandler}>New</button>
+          onClick={this.clickHandler}>
+          <span className="glyphicon glyphicon-plus" aria-hidden="true" />
+        </button>
       </form>
       <ul>
       {this.state.universes.map(function(elem) {
@@ -78,6 +104,10 @@ var Universes = React.createClass({
           <a href={"/universe/" + elem.id} onClick={this.hrefHandler}
             data-id={elem.id}>
             {elem.title || elem.id}
+          </a>
+          <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
+            data-universe={elem.id}>
+            <span className="glyphicon glyphicon-trash" aria-hidden="true" />
           </a>
         </li>;
       }.bind(this))}
@@ -94,6 +124,19 @@ var Universe = React.createClass({
   getInitialState: function() {
     return {};
   },
+  toggleEditHandler: function(e) {
+    e.preventDefault();
+    this.toggleEdit();
+  },
+  toggleEdit: function() {
+    var state = this.state;
+    if (state.editable) {
+      delete(state.editable);
+    } else {
+      state.editable = true;
+    }
+    this.setState(state);
+  },
   update: function() {
     promise.get("/api/universe/" + this.props.id).
       then(function(err, text, xhr) {
@@ -101,25 +144,9 @@ var Universe = React.createClass({
       if (payload.status === 200) {
         this.setState(payload.body);
       } else {
-        this.props.opts.addError(payload.body);
+        this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
-  },
-  updateCharacter: function() {
-    var state = this.state;
-    var match = this.props.opts.reqUrl().
-      match("^\/universe\/[^\/]+\/character\/([^\/]+)");
-    if (match) {
-      if (match[1] !== state.character) {
-        state.character = match[1];
-        this.setState(state);
-      }
-    } else {
-      if ("character" in state) {
-        delete(state.character);
-        this.setState(state);
-      }
-    }
   },
   updateHandler: function(e) {
     e.preventDefault();
@@ -131,24 +158,22 @@ var Universe = React.createClass({
       if (payload.status === 200) {
         this.props.opts.updateUniverse();
         this.props.opts.updateUniverses();
+        this.toggleEdit();
         this.setState(payload.body);
       } else {
-        this.props.opts.addError(payload.body);
+        this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
   },
-  charHrefHandler: function(e) {
-    e.preventDefault();
-    var char = e.target.innerHTML;
-    var url = "/universe/" + this.props.id + "/character/" + char;
-    window.history.pushState({}, char, url);
-    var state = this.state;
-    state.character = char;
-    this.setState(state);
-  },
   componentDidMount: function() {
     this.update();
-    this.updateCharacter();
+  },
+  renderEdit: function() {
+    return <form className="form-inline" onSubmit={this.updateHandler}>
+      <input className="form-control" placeholder="Universe title" ref="title"
+        defaultValue={this.state.title} />
+      <input type="submit" className="btn btn-default" value="Update" />
+    </form>;
   },
   render: function() {
     if (!this.state.id) { return <div />; }
@@ -156,32 +181,29 @@ var Universe = React.createClass({
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateUniverse: this.update,
-      updateCharacter: this.updateCharacter
+      updateUniverse: this.update
     };
 
     var universe = this.state;
     return <div>
-      <h3>{universe.title || universe.id}</h3>
+      <h3 style={{display: "inline-block"}}>{universe.title || universe.id}</h3>
 
-      <form className="form-inline" onSubmit={this.updateHandler}>
-        <input className="form-control" placeholder="Universe title" ref="title"
-          defaultValue={universe.title} />
-        <input type="submit" className="btn btn-default" value="Update" />
+      <form className="form-inline" style={
+        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
+        <button type="submit" className="btn btn-default"
+          onClick={this.toggleEditHandler}>
+          <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
+        </button>
       </form>
+      { this.state.editable ? this.renderEdit() : <div /> }
 
-      <div>
-        {universe.characters.map(function(elem) {
-          return <a href={"/universe/" + this.props.id + "/character/" + elem}
-            onClick={this.charHrefHandler}>
-            {elem}
-          </a>;
-        }.bind(this))}
-      </div>
-      { this.state.character ?
-        <Character opts={opts} uid={this.props.id} id={this.state.character}
-          key={this.state.character} /> :
-        "" }
+      <Characters uid={this.props.id} characters={universe.characters}
+        opts={opts} key={universe.characters.
+        map(function(elem) { return elem.updated_at; } ).join("")} />
+
+      <Stories uid={this.props.id} stories={universe.stories}
+        opts={opts} key={universe.stories.
+        map(function(elem) { return elem.updated_at; } ).join("")} />
     </div>;
   }
 });

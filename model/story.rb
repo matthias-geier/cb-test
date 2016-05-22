@@ -34,6 +34,7 @@ module Story
     id = new_id(uid)
     story_count = $redis.zcard(list_key(uid))
     $redis.zadd(list_key(uid), story_count + 1, id)
+    $redis.hset(id, "sid", id)
 
     return update(id, fields.merge(uid: uid))
   end
@@ -52,7 +53,7 @@ module Story
 
   def delete(id)
     obj = to_h(id)
-    $redis.zrem(obj["uid"], obj["id"])
+    $redis.zrem(list_key(obj["uid"]), obj["id"])
     $redis.del(id)
   end
 

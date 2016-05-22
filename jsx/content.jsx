@@ -33,9 +33,13 @@ var Content = React.createClass({
   //  this.forceUpdate();
   //},
   errors: function() {
-    return this.state.errors.map(function(err, i) {
-      return <p key={i} className="bg-danger">{err}</p>;
-    }.bind(this));
+    return <div className="row">
+      {this.state.errors.length > 0 ? <h3>Errors</h3> : ""}
+      {this.state.errors.map(function(err, i) {
+      return <div className="col-md-12" key={i}>
+        <p className="bg-danger">{err}</p>
+      </div>; }.bind(this))}
+    </div>;
   },
   componentDidMount: function() {
     window.onpopstate = function(e) {

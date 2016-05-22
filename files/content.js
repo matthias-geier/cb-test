@@ -33,9 +33,13 @@ var Content = React.createClass({displayName: "Content",
   //  this.forceUpdate();
   //},
   errors: function() {
-    return this.state.errors.map(function(err, i) {
-      return React.createElement("p", {key: i, className: "bg-danger"}, err);
-    }.bind(this));
+    return React.createElement("div", {className: "row"}, 
+      this.state.errors.length > 0 ? React.createElement("h3", null, "Errors") : "", 
+      this.state.errors.map(function(err, i) {
+      return React.createElement("div", {className: "col-md-12", key: i}, 
+        React.createElement("p", {className: "bg-danger"}, err)
+      ); }.bind(this))
+    );
   },
   componentDidMount: function() {
     window.onpopstate = function(e) {

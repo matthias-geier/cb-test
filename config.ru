@@ -181,7 +181,8 @@ class UniverseApi < Grape::API
           end
 
           params do
-            requires :pose, type: String, desc: "Pose text"
+            requires :pose, type: String, regexp: /\A.+\z/m,
+              desc: "Pose text"
           end
           post "pose" do
             {status: 200, body: Story.pose(params[:sid], params[:pose])}

@@ -24,7 +24,7 @@ module Character
     $redis.sadd(list_key(uid), cid)
     $redis.hset(full_id, "cid", cid)
 
-    return update(full_id, fields.merge(uid: uid))
+    return update(uid, cid, fields.merge(uid: uid))
   end
 
   def update(uid, cid, fields)
@@ -48,7 +48,7 @@ module Character
   def delete(uid, cid)
     id = "#{uid}_#{cid}"
     obj = to_h(uid, cid)
-    $redis.srem(obj["uid"], obj["cid"])
+    $redis.srem(list_key(obj["uid"]), obj["cid"])
     $redis.del(id)
   end
 
