@@ -198,11 +198,11 @@ var Universe = React.createClass({
       { this.state.editable ? this.renderEdit() : <div /> }
 
       <Characters uid={this.props.id} characters={universe.characters}
-        opts={opts} key={universe.characters.
+        opts={opts} key={"c" + universe.characters.
         map(function(elem) { return elem.updated_at; } ).join("")} />
 
       <Stories uid={this.props.id} stories={universe.stories}
-        opts={opts} key={universe.stories.
+        opts={opts} key={"s" + universe.stories.
         map(function(elem) { return elem.updated_at; } ).join("")} />
     </div>;
   }
