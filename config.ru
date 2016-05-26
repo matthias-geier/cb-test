@@ -32,6 +32,8 @@ module StoryHelpers
 end
 
 class UniverseApi < Grape::API
+  use Rack::Session::Cookie, key: "session", path: "/", secret: "moobar"
+
   version 'v1', using: :accept_version_header
   format :json
   prefix :api
@@ -41,6 +43,8 @@ class UniverseApi < Grape::API
   desc "provides access to the universe"
   namespace :universe do
     get do
+      p env['rack.session']['ts']
+      env['rack.session']['ts'] = Time.now.to_i
       {status: 200, body: Universe.list}
     end
 

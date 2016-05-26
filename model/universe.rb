@@ -6,7 +6,7 @@ module Universe
   LIST_KEY = "universes"
 
   def new_id
-    SecureRandom.hex
+    SecureRandom.hex(6)
   end
 
   def exists?(id)
