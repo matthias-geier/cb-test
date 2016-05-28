@@ -1,92 +1,99 @@
 module Story
   extend self
 
-  LIST_SUFFIX = "_stories"
-  POSE_SUFFIX = "_poses"
+  LIST_KEY = "stories"
+  POSE_KEY = "poses"
 
   def list_key(uid)
-    "#{uid}#{LIST_SUFFIX}"
+    "#{Universe.universe_key(uid)}/#{LIST_KEY}"
   end
 
-  def pose_key(id)
-    "#{id}#{POSE_SUFFIX}"
+  def story_key(uid, sid)
+    "#{list_key(uid)}/#{sid}"
   end
 
-  def new_id(uid)
-    "#{uid}_#{Time.now.to_i}"
+  def pose_key(uid, sid)
+    "#{story_key(uid, sid)}/#{POSE_KEY}"
+  end
+
+  def new_id
+    Time.now.to_i.to_s
   end
 
   def list(uid)
-    $redis.zrange(list_key(uid), 0, -1).map { |id| to_h(id, false) }
+    $redis.zrange(list_key(uid), 0, -1).map { |sid| to_h(uid, sid, false) }
   end
 
-  def exists?(uid, id)
+  def exists?(uid, sid)
     $redis.exists(list_key(uid)) &&
-      $redis.exists(id)
+      $redis.exists(story_key(uid, sid))
   end
 
-  def pose_exists?(uid, id, timestamp)
-    exists?(uid, id) &&
-      $redis.zrank(pose_key(id), timestamp.to_i)
+  def pose_exists?(uid, sid, num)
+    exists?(uid, sid) &&
+      $redis.zrank(pose_key(uid, sid), num.to_i)
   end
 
   def create(uid, fields)
-    id = new_id(uid)
+    sid = new_id
     story_count = $redis.zcard(list_key(uid))
-    $redis.zadd(list_key(uid), story_count + 1, id)
-    $redis.hset(id, "sid", id)
+    $redis.zadd(list_key(uid), story_count + 1, sid)
+    $redis.hset(story_key(uid, sid), "sid", sid)
 
-    return update(id, fields.merge(uid: uid))
+    return update(uid, sid, fields.merge(uid: uid))
   end
 
-  def update(id, fields)
+  def update(uid, sid, fields)
+    full_id = story_key(uid, sid)
     fields.each do |field, value|
       if value.nil? || value.empty?
-        $redis.hdel(id, field)
+        $redis.hdel(full_id, field)
       else
-        $redis.hset(id, field, value)
+        $redis.hset(full_id, field, value)
       end
     end
-    touch(id)
-    return to_h(id)
+    touch(full_id)
+    return to_h(uid, sid)
   end
 
-  def delete(id)
-    obj = to_h(id)
-    $redis.zrem(list_key(obj["uid"]), obj["id"])
-    $redis.del(id)
+  def delete(uid, sid)
+    $redis.del(story_key(uid, sid))
+    $redis.del(pose_key(uid, sid))
+    $redis.zrem(list_key(uid), sid)
   end
 
-  def touch(id)
-    $redis.hset(id, "updated_at", Time.now.to_i)
+  def touch(full_id)
+    $redis.hset(full_id, "updated_at", Time.now.to_i)
   end
 
-  def to_h(id, full = true)
-    db_hash = $redis.hgetall(id)
-    db_hash["id"] = id
+  def to_h(uid, sid, full = true)
+    full_id = story_key(uid, sid)
+    db_hash = $redis.hgetall(full_id)
+    db_hash["id"] = sid
     db_hash["updated_at"] = Time.at(db_hash["updated_at"].to_i).utc
     return db_hash unless full
 
-    db_hash["poses"] = $redis.zrange(pose_key(id), 0, -1, with_scores: true).
+    db_hash["poses"] = $redis.zrange(pose_key(uid, sid), 0, -1,
+      with_scores: true).
       reduce([]) { |acc, (pose, key)| acc << [key.to_i, pose] }
     return db_hash
   end
 
-  def pose(id, pose)
-    timestamp = Time.now.to_i
-    $redis.zadd(pose_key(id), timestamp, pose)
-    touch(id)
+  def pose(uid, sid, pose)
+    pose_count = $redis.zcard(pose_key(uid, sid))
+    $redis.zadd(pose_key(uid, sid), pose_count + 1, pose)
+    touch(story_key(uid, sid))
 
-    return to_h(id)
+    return to_h(uid, sid)
   end
 
-  def unpose(id, timestamp)
-    t = timestamp.to_i
-    $redis.zrangebyscore(pose_key(id), t, t).each do |pose|
-      $redis.zrem(pose_key(id), pose)
+  def unpose(uid, sid, num)
+    num = num.to_i
+    $redis.zrangebyscore(pose_key(uid, sid), num, num).each do |pose|
+      $redis.zrem(pose_key(uid, sid), pose)
     end
-    touch(id)
+    touch(story_key(uid, sid))
 
-    return to_h(id)
+    return to_h(uid, sid)
   end
 end

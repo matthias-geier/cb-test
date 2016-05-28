@@ -122,7 +122,8 @@ var Stories = React.createClass({displayName: "Stories",
       updateUniverse: this.props.opts.updateUniverse,
       updateStory: this.updateStory
     };
-    return React.createElement("div", null, 
+    return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
+      backgroundColor: "white", padding: "0.5em"}}, 
       React.createElement("h3", {style: {display: "inline-block"}}, "Stories"), 
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
@@ -210,7 +211,7 @@ var Story = React.createClass({displayName: "Story",
     e.preventDefault();
     var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
     promise.del("/api" + url + "/pose",
-      JSON.stringify({timestamp: e.currentTarget.dataset.ts}),
+      JSON.stringify({num: e.currentTarget.dataset.num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
@@ -238,7 +239,7 @@ var Story = React.createClass({displayName: "Story",
           new Date(pose[0] * 1000).format('M jS Y H:i'), 
         
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
-          "data-ts": pose[0]}, 
+          "data-num": pose[0]}, 
           React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
         )
         ), 

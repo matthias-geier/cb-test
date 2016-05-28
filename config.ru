@@ -11,71 +11,137 @@ module StoryHelpers
   extend Grape::API::Helpers
 
   def validate_uid!
-    return if Universe.exists?(params[:uid] || params[:id])
+    return if Universe.exists?(params[:uid])
     error!({status: 404, body: "Universe not found"}, 404)
   end
 
   def validate_sid!
-    return if Story.exists?(params[:uid], params[:sid] || params[:id])
+    return if Story.exists?(params[:uid], params[:sid])
     error!({status: 404, body: "Story not found in Universe"}, 404)
   end
 
   def validate_pose!
-    return if Story.pose_exists?(params[:uid], params[:sid], params[:timestamp])
+    return if Story.pose_exists?(params[:uid], params[:sid], params[:num])
     error!({status: 404, body: "Story pose not found"}, 404)
   end
 
   def validate_cid!
-    return if Character.exists?(params[:uid], params[:cid] || params[:id])
+    return if Character.exists?(params[:uid], params[:cid])
     error!({status: 404, body: "Character not found in Universe"}, 404)
   end
 end
 
-class UniverseApi < Grape::API
-  use Rack::Session::Cookie, key: "session", path: "/", secret: "moobar"
+module SessionHelpers
+  extend Grape::API::Helpers
 
+  def access_keys
+    JSON.parse(env["rack.session"]["keys"] || "[]").select do |k|
+      AccessKey.exists?(k)
+    end
+  end
+
+  def append_access_keys!(keys)
+    updated_keys = (access_keys | keys).select { |k| AccessKey.exists?(k) }
+    return override_access_keys!(updated_keys)
+  end
+
+  def override_access_keys!(keys)
+    env["rack.session"]["keys"] = keys.to_json
+    return keys
+  end
+
+  def access_uid!
+    return if AccessKey.access?(access_keys, params[:uid])
+    error!({status: 403, body: "Cannot access Universe"}, 403)
+  end
+
+  def last_access_key!
+    return if AccessKey.list(params[:uid]).size > 1
+    error!({status: 500, body: "Cannot destroy last access key"}, 500)
+  end
+end
+
+class UniverseApi < Grape::API
   version 'v1', using: :accept_version_header
   format :json
   prefix :api
 
+  helpers SessionHelpers
   helpers StoryHelpers
 
-  desc "provides access to the universe"
-  namespace :universe do
+  namespace :session do
     get do
-      p env['rack.session']['ts']
-      env['rack.session']['ts'] = Time.now.to_i
-      {status: 200, body: Universe.list}
+      {status: 200, body: access_keys}
     end
 
     params do
-      requires :id, type: String, desc: "Universe id"
+      requires :keys, type: Array, desc: "Known universe access keys"
     end
-    get ":id" do
+    post do
+      {status: 200, body: override_access_keys!(params["keys"])}
+    end
+  end
+
+  namespace :universe do
+    get do
+      {status: 200, body: Universe.list(access_keys)}
+    end
+
+    params do
+      requires :uid, type: String, desc: "Universe id"
+    end
+    get ":uid" do
       validate_uid!
-      {status: 200, body: Universe.to_h(params[:id])}
+      access_uid!
+      {status: 200, body: Universe.to_h(params[:uid])}
     end
 
     post do
-      {status: 200, body: Universe.create}
+      universe = Universe.create
+      append_access_keys!(universe["access_keys"])
+      {status: 200, body: universe}
     end
 
     params do
-      requires :id, type: String, desc: "Universe id"
+      requires :uid, type: String, desc: "Universe id"
       optional :title, type: String, desc: "Story title"
     end
-    put ":id" do
+    put ":uid" do
       validate_uid!
-      {status: 200, body: Universe.update(params[:id], declared(params))}
+      access_uid!
+      {status: 200, body: Universe.update(params[:uid], declared(params))}
     end
 
     params do
-      requires :id, type: String, desc: "Universe id"
+      requires :uid, type: String, desc: "Universe id"
     end
-    delete ":id" do
+    delete ":uid" do
       validate_uid!
-      Universe.delete(params[:id])
-      {status: 200, body: {deleted: params[:id]}}
+      access_uid!
+      Universe.delete(params[:uid])
+      {status: 200, body: {deleted: params[:uid]}}
+    end
+
+    params do
+      requires :uid, type: String, desc: "Universe id"
+    end
+    post ":uid/access_key" do
+      validate_uid!
+      access_uid!
+      AccessKey.create(params[:uid])
+      {status: 200, body: Universe.to_h(params[:uid])}
+    end
+
+    params do
+      requires :uid, type: String, desc: "Universe id"
+      requires :access_key, type: String, desc: "Access key"
+    end
+    delete ":uid/access_key" do
+      validate_uid!
+      access_uid!
+      last_access_key!
+      AccessKey.delete(params[:access_key])
+      {status: 200, body: Universe.to_h(params[:uid])}
     end
 
     params do
@@ -92,41 +158,41 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :id, type: String, desc: "Character id"
+          requires :cid, type: String, desc: "Character id"
         end
-        get ":id" do
+        get ":cid" do
           validate_cid!
-          {status: 200, body: Character.to_h(params[:uid], params[:id])}
+          {status: 200, body: Character.to_h(params[:uid], params[:cid])}
         end
 
         params do
-          requires :id, type: String, regexp: /\A[a-z_]+\z/,
+          requires :cid, type: String, regexp: /\A[a-z_]+\z/,
             desc: "Unique character id"
         end
         post do
-          if Character.exists?(params[:uid], params[:id])
+          if Character.exists?(params[:uid], params[:cid])
             error!({status: 500, body: "Character id taken"}, 500)
           end
           {status: 200, body: Character.create(params[:uid], params)}
         end
 
         params do
-          requires :id, type: String, desc: "Character id"
+          requires :cid, type: String, desc: "Character id"
         end
-        put ":id" do
+        put ":cid" do
           validate_cid!
           {
             status: 200,
-            body: Character.update(params[:uid], params[:id], params)
+            body: Character.update(params[:uid], params[:cid], params)
           }
         end
 
         params do
-          requires :id, type: String, desc: "Character id"
+          requires :cid, type: String, desc: "Character id"
         end
-        delete ":id" do
+        delete ":cid" do
           validate_cid!
-          {status: 200, body: Character.delete(params[:uid], params[:id])}
+          {status: 200, body: Character.delete(params[:uid], params[:cid])}
         end
       end
     end
@@ -145,11 +211,11 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :id, type: String, desc: "Story id"
+          requires :sid, type: String, desc: "Story id"
         end
-        get ":id" do
+        get ":sid" do
           validate_sid!
-          {status: 200, body: Story.to_h(params[:id])}
+          {status: 200, body: Story.to_h(params[:uid], params[:sid])}
         end
 
         params do
@@ -160,20 +226,21 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :id, type: String, desc: "Story id"
+          requires :sid, type: String, desc: "Story id"
           optional :title, type: String, desc: "Story title"
         end
-        put ":id" do
+        put ":sid" do
           validate_sid!
-          {status: 200, body: Story.update(params[:id], declared(params))}
+          {status: 200, body: Story.update(params[:uid], params[:sid],
+            declared(params))}
         end
 
         params do
-          requires :id, type: String, desc: "Story id"
+          requires :sid, type: String, desc: "Story id"
         end
-        delete ":id" do
+        delete ":sid" do
           validate_sid!
-          {status: 200, body: Story.delete(params[:id])}
+          {status: 200, body: Story.delete(params[:uid], params[:sid])}
         end
 
         params do
@@ -189,14 +256,16 @@ class UniverseApi < Grape::API
               desc: "Pose text"
           end
           post "pose" do
-            {status: 200, body: Story.pose(params[:sid], params[:pose])}
+            {status: 200, body: Story.pose(params[:uid], params[:sid],
+              params[:pose])}
           end
 
           params do
-            requires :timestamp, type: String, desc: "Pose timestamp"
+            requires :num, type: String, desc: "Pose num"
           end
           delete "pose" do
-            {status: 200, body: Story.unpose(params[:sid], params[:timestamp])}
+            {status: 200, body: Story.unpose(params[:uid], params[:sid],
+              params[:num])}
           end
         end
       end
@@ -224,5 +293,7 @@ class ServeRoot
   end
 end
 
+use Rack::Session::Cookie, key: "d9d8fJkJKD30sd", path: "/", secret: "moobar",
+  expire_after: 2592000
 use ServeRoot
 run UniverseApi

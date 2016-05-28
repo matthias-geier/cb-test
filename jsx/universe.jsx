@@ -34,7 +34,7 @@ var Universes = React.createClass({
       }
     }
   },
-  clickHandler: function(e) {
+  createHandler: function(e) {
     e.preventDefault();
     promise.post("/api/universe", undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -59,6 +59,13 @@ var Universes = React.createClass({
     window.history.pushState({}, e.target.innerHTML, url);
     var state = this.state;
     state.universe = universe;
+    this.setState(state);
+  },
+  hrefResetHandler: function(e) {
+    e.preventDefault();
+    window.history.pushState({}, "/", "/");
+    var state = this.state;
+    delete(state.universe);
     this.setState(state);
   },
   destroyHandler: function(e) {
@@ -90,14 +97,18 @@ var Universes = React.createClass({
       updateUniverse: this.updateUniverse
     };
     return <div>
-      <h2 style={{display: "inline-block"}}>Universes</h2>
-      <form className="form-inline" style={
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
-        <button type="submit" className="btn btn-default"
-          onClick={this.clickHandler}>
-          <span className="glyphicon glyphicon-plus" aria-hidden="true" />
-        </button>
-      </form>
+      <Session opts={opts}>
+        <h2 style={{display: "inline-block"}}>
+          <a href="#" onClick={this.hrefResetHandler}>Universes</a>
+        </h2>
+        <form className="form-inline" style={{display: "inline-block",
+          verticalAlign: "middle", marginLeft: "2em"}}>
+          <button type="submit" className="btn btn-default"
+            onClick={this.createHandler}>
+            <span className="glyphicon glyphicon-plus" aria-hidden="true" />
+          </button>
+        </form>
+      </Session>
       <ul>
       {this.state.universes.map(function(elem) {
         return <li key={elem.id+elem.title}>
@@ -137,6 +148,10 @@ var Universe = React.createClass({
     }
     this.setState(state);
   },
+  currentRoute: function() {
+    var match = this.props.opts.reqUrl().match("^/universe/[^/]+/?([^/]+)");
+    return match ? match[1] : "";
+  },
   update: function() {
     promise.get("/api/universe/" + this.props.id).
       then(function(err, text, xhr) {
@@ -165,6 +180,14 @@ var Universe = React.createClass({
       }
     }.bind(this));
   },
+  handleHref: function(title, url_partial) {
+    return function(e) {
+      e.preventDefault();
+      window.history.pushState({}, title,
+        "/universe/" + this.props.id + "/" + url_partial);
+      this.forceUpdate();
+    }.bind(this);
+  },
   componentDidMount: function() {
     this.update();
   },
@@ -174,6 +197,19 @@ var Universe = React.createClass({
         defaultValue={this.state.title} />
       <input type="submit" className="btn btn-default" value="Update" />
     </form>;
+  },
+  renderMenu: function() {
+    var current = this.currentRoute();
+    var menu_items = [["character", "Characters"], ["story", "Stories"]];
+    return <ul className="nav nav-tabs" key={current}
+      style={{marginTop: "2em"}}>
+      {menu_items.map(function(elem) {
+        return <li key={elem[0]} role="presentation" className={
+          current === elem[0] ? "active" : ""}>
+          <a href="#" onClick={this.handleHref(elem[1], elem[0])}>{elem[1]}</a>
+        </li>;
+      }.bind(this))}
+    </ul>;
   },
   render: function() {
     if (!this.state.id) { return <div />; }
@@ -185,25 +221,37 @@ var Universe = React.createClass({
     };
 
     var universe = this.state;
+    var title = universe.title || universe.id;
+    var current = this.currentRoute();
     return <div>
-      <h3 style={{display: "inline-block"}}>{universe.title || universe.id}</h3>
+      <AccessKey uid={universe.id} opts={opts}>
+        <h3 style={{display: "inline-block"}}>
+          <a href="#" onClick={this.handleHref(title, "")}>{title}</a>
+        </h3>
 
-      <form className="form-inline" style={
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
-        <button type="submit" className="btn btn-default"
-          onClick={this.toggleEditHandler}>
-          <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
-        </button>
-      </form>
-      { this.state.editable ? this.renderEdit() : <div /> }
+        <form className="form-inline" style={{display: "inline-block",
+          verticalAlign: "middle", marginLeft: "2em"}}>
+          <button type="submit" className="btn btn-default"
+            onClick={this.toggleEditHandler}>
+            <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
+          </button>
+        </form>
+      </AccessKey>
+      {this.state.editable ? this.renderEdit() : <div />}
 
-      <Characters uid={this.props.id} characters={universe.characters}
-        opts={opts} key={"c" + universe.characters.
-        map(function(elem) { return elem.updated_at; } ).join("")} />
+      {this.renderMenu()}
 
-      <Stories uid={this.props.id} stories={universe.stories}
-        opts={opts} key={"s" + universe.stories.
-        map(function(elem) { return elem.updated_at; } ).join("")} />
+      {current === "character" ?
+        <Characters uid={this.props.id} characters={universe.characters}
+          opts={opts} key={"c" + universe.characters.
+          map(function(elem) { return elem.updated_at; } ).join("")} /> :
+        ""}
+
+      {current === "story" ?
+        <Stories uid={this.props.id} stories={universe.stories}
+          opts={opts} key={"s" + universe.stories.
+          map(function(elem) { return elem.updated_at; } ).join("")} /> :
+        ""}
     </div>;
   }
 });

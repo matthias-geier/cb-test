@@ -52,7 +52,7 @@ var Characters = React.createClass({displayName: "Characters",
     e.preventDefault();
     var char = this.refs.id.value;
     var url = "/universe/" + this.props.uid + "/character";
-    promise.post("/api" + url, JSON.stringify({id: char}),
+    promise.post("/api" + url, JSON.stringify({cid: char}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
@@ -120,7 +120,8 @@ var Characters = React.createClass({displayName: "Characters",
       reqUrl: this.props.opts.reqUrl,
       updateCharacter: this.updateCharacter
     };
-    return React.createElement("div", null, 
+    return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
+      backgroundColor: "white", padding: "0.5em"}}, 
       React.createElement("h3", {style: {display: "inline-block"}}, "Characters"), 
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 

@@ -34,7 +34,7 @@ var Universes = React.createClass({displayName: "Universes",
       }
     }
   },
-  clickHandler: function(e) {
+  createHandler: function(e) {
     e.preventDefault();
     promise.post("/api/universe", undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -59,6 +59,13 @@ var Universes = React.createClass({displayName: "Universes",
     window.history.pushState({}, e.target.innerHTML, url);
     var state = this.state;
     state.universe = universe;
+    this.setState(state);
+  },
+  hrefResetHandler: function(e) {
+    e.preventDefault();
+    window.history.pushState({}, "/", "/");
+    var state = this.state;
+    delete(state.universe);
     this.setState(state);
   },
   destroyHandler: function(e) {
@@ -90,12 +97,16 @@ var Universes = React.createClass({displayName: "Universes",
       updateUniverse: this.updateUniverse
     };
     return React.createElement("div", null, 
-      React.createElement("h2", {style: {display: "inline-block"}}, "Universes"), 
-      React.createElement("form", {className: "form-inline", style: 
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
-        React.createElement("button", {type: "submit", className: "btn btn-default", 
-          onClick: this.clickHandler}, 
-          React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
+      React.createElement(Session, {opts: opts}, 
+        React.createElement("h2", {style: {display: "inline-block"}}, 
+          React.createElement("a", {href: "#", onClick: this.hrefResetHandler}, "Universes")
+        ), 
+        React.createElement("form", {className: "form-inline", style: {display: "inline-block",
+          verticalAlign: "middle", marginLeft: "2em"}}, 
+          React.createElement("button", {type: "submit", className: "btn btn-default", 
+            onClick: this.createHandler}, 
+            React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
+          )
         )
       ), 
       React.createElement("ul", null, 
@@ -137,6 +148,10 @@ var Universe = React.createClass({displayName: "Universe",
     }
     this.setState(state);
   },
+  currentRoute: function() {
+    var match = this.props.opts.reqUrl().match("^/universe/[^/]+/?([^/]+)");
+    return match ? match[1] : "";
+  },
   update: function() {
     promise.get("/api/universe/" + this.props.id).
       then(function(err, text, xhr) {
@@ -165,6 +180,14 @@ var Universe = React.createClass({displayName: "Universe",
       }
     }.bind(this));
   },
+  handleHref: function(title, url_partial) {
+    return function(e) {
+      e.preventDefault();
+      window.history.pushState({}, title,
+        "/universe/" + this.props.id + "/" + url_partial);
+      this.forceUpdate();
+    }.bind(this);
+  },
   componentDidMount: function() {
     this.update();
   },
@@ -173,6 +196,19 @@ var Universe = React.createClass({displayName: "Universe",
       React.createElement("input", {className: "form-control", placeholder: "Universe title", ref: "title", 
         defaultValue: this.state.title}), 
       React.createElement("input", {type: "submit", className: "btn btn-default", value: "Update"})
+    );
+  },
+  renderMenu: function() {
+    var current = this.currentRoute();
+    var menu_items = [["character", "Characters"], ["story", "Stories"]];
+    return React.createElement("ul", {className: "nav nav-tabs", key: current, 
+      style: {marginTop: "2em"}}, 
+      menu_items.map(function(elem) {
+        return React.createElement("li", {key: elem[0], role: "presentation", className: 
+          current === elem[0] ? "active" : ""}, 
+          React.createElement("a", {href: "#", onClick: this.handleHref(elem[1], elem[0])}, elem[1])
+        );
+      }.bind(this))
     );
   },
   render: function() {
@@ -185,25 +221,37 @@ var Universe = React.createClass({displayName: "Universe",
     };
 
     var universe = this.state;
+    var title = universe.title || universe.id;
+    var current = this.currentRoute();
     return React.createElement("div", null, 
-      React.createElement("h3", {style: {display: "inline-block"}}, universe.title || universe.id), 
+      React.createElement(AccessKey, {uid: universe.id, opts: opts}, 
+        React.createElement("h3", {style: {display: "inline-block"}}, 
+          React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
+        ), 
 
-      React.createElement("form", {className: "form-inline", style: 
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
-        React.createElement("button", {type: "submit", className: "btn btn-default", 
-          onClick: this.toggleEditHandler}, 
-          React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+        React.createElement("form", {className: "form-inline", style: {display: "inline-block",
+          verticalAlign: "middle", marginLeft: "2em"}}, 
+          React.createElement("button", {type: "submit", className: "btn btn-default", 
+            onClick: this.toggleEditHandler}, 
+            React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+          )
         )
       ), 
-       this.state.editable ? this.renderEdit() : React.createElement("div", null), 
+      this.state.editable ? this.renderEdit() : React.createElement("div", null), 
 
-      React.createElement(Characters, {uid: this.props.id, characters: universe.characters, 
-        opts: opts, key: "c" + universe.characters.
-        map(function(elem) { return elem.updated_at; } ).join("")}), 
+      this.renderMenu(), 
 
-      React.createElement(Stories, {uid: this.props.id, stories: universe.stories, 
-        opts: opts, key: "s" + universe.stories.
-        map(function(elem) { return elem.updated_at; } ).join("")})
+      current === "character" ?
+        React.createElement(Characters, {uid: this.props.id, characters: universe.characters, 
+          opts: opts, key: "c" + universe.characters.
+          map(function(elem) { return elem.updated_at; } ).join("")}) :
+        "", 
+
+      current === "story" ?
+        React.createElement(Stories, {uid: this.props.id, stories: universe.stories, 
+          opts: opts, key: "s" + universe.stories.
+          map(function(elem) { return elem.updated_at; } ).join("")}) :
+        ""
     );
   }
 });

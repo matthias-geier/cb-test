@@ -28,10 +28,6 @@ var Content = React.createClass({displayName: "Content",
     return window.location.href.toString().split(window.location.host)[1].
       split("#")[0];
   },
-  //reroute: function(url, title) {
-  //  window.history.pushState({}, title, url);
-  //  this.forceUpdate();
-  //},
   errors: function() {
     return React.createElement("div", {className: "row"}, 
       this.state.errors.length > 0 ? React.createElement("h3", null, "Errors") : "", 
