@@ -98,7 +98,7 @@ var Universes = React.createClass({displayName: "Universes",
     };
     return React.createElement("div", null, 
       React.createElement(Session, {opts: opts}, 
-        React.createElement("h2", {style: {display: "inline-block"}}, 
+        React.createElement("h1", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.hrefResetHandler}, "Universes")
         ), 
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",
@@ -157,7 +157,9 @@ var Universe = React.createClass({displayName: "Universe",
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.universe = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -174,7 +176,9 @@ var Universe = React.createClass({displayName: "Universe",
         this.props.opts.updateUniverse();
         this.props.opts.updateUniverses();
         this.toggleEdit();
-        this.setState(payload.body);
+        var state = this.state;
+        state.universe = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -194,7 +198,7 @@ var Universe = React.createClass({displayName: "Universe",
   renderEdit: function() {
     return React.createElement("form", {className: "form-inline", onSubmit: this.updateHandler}, 
       React.createElement("input", {className: "form-control", placeholder: "Universe title", ref: "title", 
-        defaultValue: this.state.title}), 
+        defaultValue: this.state.universe.title}), 
       React.createElement("input", {type: "submit", className: "btn btn-default", value: "Update"})
     );
   },
@@ -212,7 +216,7 @@ var Universe = React.createClass({displayName: "Universe",
     );
   },
   render: function() {
-    if (!this.state.id) { return React.createElement("div", null); }
+    if (!this.state.universe) { return React.createElement("div", null); }
     var opts = {
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
@@ -220,12 +224,12 @@ var Universe = React.createClass({displayName: "Universe",
       updateUniverse: this.update
     };
 
-    var universe = this.state;
+    var universe = this.state.universe;
     var title = universe.title || universe.id;
     var current = this.currentRoute();
     return React.createElement("div", null, 
       React.createElement(AccessKey, {uid: universe.id, opts: opts}, 
-        React.createElement("h3", {style: {display: "inline-block"}}, 
+        React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
         ), 
 

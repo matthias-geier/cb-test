@@ -124,7 +124,7 @@ var Stories = React.createClass({displayName: "Stories",
     };
     return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
       backgroundColor: "white", padding: "0.5em"}}, 
-      React.createElement("h3", {style: {display: "inline-block"}}, "Stories"), 
+      React.createElement("h2", {style: {display: "inline-block"}}, "Stories"), 
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
         React.createElement("button", {type: "submit", className: "btn btn-default", 
@@ -155,7 +155,9 @@ var Story = React.createClass({displayName: "Story",
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -176,7 +178,7 @@ var Story = React.createClass({displayName: "Story",
   },
   updateHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.put("/api" + url,
       JSON.stringify({title: this.refs.title.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -185,7 +187,9 @@ var Story = React.createClass({displayName: "Story",
       if (payload.status === 200) {
         this.props.opts.updateUniverse();
         this.toggleEdit();
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -193,14 +197,16 @@ var Story = React.createClass({displayName: "Story",
   },
   poseHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.post("/api" + url + "/pose",
       JSON.stringify({pose: this.refs.pose.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
         this.refs.pose.value = "";
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -209,14 +215,16 @@ var Story = React.createClass({displayName: "Story",
   },
   unposeHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.del("/api" + url + "/pose",
       JSON.stringify({num: e.currentTarget.dataset.num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -228,29 +236,28 @@ var Story = React.createClass({displayName: "Story",
   renderEdit: function() {
     return React.createElement("form", {className: "form-inline", onSubmit: this.updateHandler}, 
       React.createElement("input", {className: "form-control", placeholder: "Title", ref: "title", 
-        defaultValue: this.state.title}), 
+        defaultValue: this.state.story.title}), 
       React.createElement("input", {type: "submit", className: "btn btn-default", value: "Update"})
     );
   },
   renderPlain: function() {
-    return this.state.poses.map(function(pose, i) {
-      return React.createElement("div", {className: "row", key: i}, 
-        React.createElement("div", {className: "col-md-3"}, 
-          new Date(pose[0] * 1000).format('M jS Y H:i'), 
-        
-        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
-          "data-num": pose[0]}, 
-          React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+    return this.state.story.poses.map(function(pose) {
+      return React.createElement("div", {className: "col-md-12", key: pose[0]}, 
+        React.createElement("blockquote", null, 
+          React.createElement("p", {style: {whiteSpace: "pre-line"}}, pose[1]), 
+          React.createElement("footer", null, "#", pose[0], 
+          React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
+            "data-num": pose[0]}, 
+            React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+          ))
         )
-        ), 
-        React.createElement("div", {className: "col-md-9"}, React.createElement("pre", null, pose[1]))
       );
     }.bind(this));
   },
   render: function() {
-    if (!this.state.id) { return React.createElement("div", null); }
+    if (!this.state.story) { return React.createElement("div", null); }
 
-    var story = this.state;
+    var story = this.state.story;
     return React.createElement("div", null, 
       React.createElement("h3", null, story.title, " ", React.createElement("button", {type: "submit", className: "btn btn-default", 
         onClick: this.toggleEdit}, 
@@ -258,9 +265,17 @@ var Story = React.createClass({displayName: "Story",
       )), 
       this.state.editable ? this.renderEdit() : "", 
       this.renderPlain(), 
-      React.createElement("form", {className: "form-inline", onSubmit: this.poseHandler}, 
-        React.createElement("textarea", {className: "form-control", placeholder: "Pose", ref: "pose"}), 
-        React.createElement("input", {type: "submit", className: "btn btn-default", value: "Pose"})
+      React.createElement("div", {className: "row"}, 
+      React.createElement("form", {onSubmit: this.poseHandler}, 
+        React.createElement("div", {className: "form-group col-md-12"}, 
+          React.createElement("textarea", {className: "form-control", placeholder: "Pose", ref: "pose", 
+            rows: "5"})
+        ), 
+        React.createElement("div", {className: "col-md-3"}, 
+        React.createElement("input", {type: "submit", className: "btn btn-primary form-control", 
+          value: "Pose"})
+        )
+      )
       )
     );
   }

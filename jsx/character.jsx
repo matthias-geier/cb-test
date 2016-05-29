@@ -153,7 +153,9 @@ var Character = React.createClass({
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.character = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -194,7 +196,7 @@ var Character = React.createClass({
   },
   addFieldHandler: function(e) {
     e.preventDefault();
-    var state = this.state;
+    var state = this.state.character;
     for(var i = 1; ; i++) {
       if (Object.keys(state).indexOf("new field " + i) > -1) { continue; }
       state["new field " + i] = "";
@@ -209,20 +211,22 @@ var Character = React.createClass({
     var unused = this.editableFields().filter(function(elem) {
       return !fieldset.includes(elem);
     });
-    var state = this.state;
+    var state = this.state.character;
     unused.forEach(function(elem) { delete(state[elem]) });
     this.setState(state);
   },
   editableFields: function() {
     var blocked = ["id", "cid", "uid", "updated_at", "editable"];
-    return Object.keys(this.state).filter(function(val) {
+    return Object.keys(this.state.character).filter(function(val) {
       return !blocked.includes(val);
     });
   },
   renderPlain: function() {
     return <table className="table table-hover"><tbody>{
       this.editableFields().map(function(key) {
-        return <tr key={key}><td>{key}</td><td>{this.state[key]}</td></tr>;
+        return <tr key={key}>
+          <td>{key}</td><td>{this.state.character[key]}</td>
+        </tr>;
       }.bind(this))
     }</tbody></table>;
   },
@@ -234,7 +238,7 @@ var Character = React.createClass({
             <td><input className="form-control" ref={"key"+i}
               defaultValue={key} /></td>
             <td><input className="form-control" ref={"value"+i}
-              defaultValue={this.state[key]} /></td>
+              defaultValue={this.state.character[key]} /></td>
           </tr>;
         }.bind(this))
       }</tbody></table>
@@ -246,9 +250,9 @@ var Character = React.createClass({
     </form>;
   },
   render: function() {
-    if (!this.state.id) { return <div />; }
+    if (!this.state.character) { return <div />; }
 
-    var char = this.state;
+    var char = this.state.character;
     return <div>
       <h3>{char.cid} <button type="submit" className="btn btn-default"
         onClick={this.toggleEdit}>

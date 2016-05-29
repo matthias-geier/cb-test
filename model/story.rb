@@ -89,8 +89,14 @@ module Story
 
   def unpose(uid, sid, num)
     num = num.to_i
-    $redis.zrangebyscore(pose_key(uid, sid), num, num).each do |pose|
-      $redis.zrem(pose_key(uid, sid), pose)
+    $redis.zrangebyscore(pose_key(uid, sid), num, "+inf").
+      each_with_index do |pose, i|
+
+      if i == 0
+        $redis.zrem(pose_key(uid, sid), pose)
+      else
+        $redis.zincrby(pose_key(uid, sid), -1, pose)
+      end
     end
     touch(story_key(uid, sid))
 

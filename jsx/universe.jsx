@@ -98,9 +98,9 @@ var Universes = React.createClass({
     };
     return <div>
       <Session opts={opts}>
-        <h2 style={{display: "inline-block"}}>
+        <h1 style={{display: "inline-block"}}>
           <a href="#" onClick={this.hrefResetHandler}>Universes</a>
-        </h2>
+        </h1>
         <form className="form-inline" style={{display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}>
           <button type="submit" className="btn btn-default"
@@ -157,7 +157,9 @@ var Universe = React.createClass({
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.universe = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -174,7 +176,9 @@ var Universe = React.createClass({
         this.props.opts.updateUniverse();
         this.props.opts.updateUniverses();
         this.toggleEdit();
-        this.setState(payload.body);
+        var state = this.state;
+        state.universe = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -194,7 +198,7 @@ var Universe = React.createClass({
   renderEdit: function() {
     return <form className="form-inline" onSubmit={this.updateHandler}>
       <input className="form-control" placeholder="Universe title" ref="title"
-        defaultValue={this.state.title} />
+        defaultValue={this.state.universe.title} />
       <input type="submit" className="btn btn-default" value="Update" />
     </form>;
   },
@@ -212,7 +216,7 @@ var Universe = React.createClass({
     </ul>;
   },
   render: function() {
-    if (!this.state.id) { return <div />; }
+    if (!this.state.universe) { return <div />; }
     var opts = {
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
@@ -220,14 +224,14 @@ var Universe = React.createClass({
       updateUniverse: this.update
     };
 
-    var universe = this.state;
+    var universe = this.state.universe;
     var title = universe.title || universe.id;
     var current = this.currentRoute();
     return <div>
       <AccessKey uid={universe.id} opts={opts}>
-        <h3 style={{display: "inline-block"}}>
+        <h2 style={{display: "inline-block"}}>
           <a href="#" onClick={this.handleHref(title, "")}>{title}</a>
-        </h3>
+        </h2>
 
         <form className="form-inline" style={{display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}>

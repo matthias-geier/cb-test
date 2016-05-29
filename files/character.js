@@ -153,7 +153,9 @@ var Character = React.createClass({displayName: "Character",
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.character = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -194,7 +196,7 @@ var Character = React.createClass({displayName: "Character",
   },
   addFieldHandler: function(e) {
     e.preventDefault();
-    var state = this.state;
+    var state = this.state.character;
     for(var i = 1; ; i++) {
       if (Object.keys(state).indexOf("new field " + i) > -1) { continue; }
       state["new field " + i] = "";
@@ -209,20 +211,22 @@ var Character = React.createClass({displayName: "Character",
     var unused = this.editableFields().filter(function(elem) {
       return !fieldset.includes(elem);
     });
-    var state = this.state;
+    var state = this.state.character;
     unused.forEach(function(elem) { delete(state[elem]) });
     this.setState(state);
   },
   editableFields: function() {
     var blocked = ["id", "cid", "uid", "updated_at", "editable"];
-    return Object.keys(this.state).filter(function(val) {
+    return Object.keys(this.state.character).filter(function(val) {
       return !blocked.includes(val);
     });
   },
   renderPlain: function() {
     return React.createElement("table", {className: "table table-hover"}, React.createElement("tbody", null, 
       this.editableFields().map(function(key) {
-        return React.createElement("tr", {key: key}, React.createElement("td", null, key), React.createElement("td", null, this.state[key]));
+        return React.createElement("tr", {key: key}, 
+          React.createElement("td", null, key), React.createElement("td", null, this.state.character[key])
+        );
       }.bind(this))
     ));
   },
@@ -234,7 +238,7 @@ var Character = React.createClass({displayName: "Character",
             React.createElement("td", null, React.createElement("input", {className: "form-control", ref: "key"+i, 
               defaultValue: key})), 
             React.createElement("td", null, React.createElement("input", {className: "form-control", ref: "value"+i, 
-              defaultValue: this.state[key]}))
+              defaultValue: this.state.character[key]}))
           );
         }.bind(this))
       )), 
@@ -246,9 +250,9 @@ var Character = React.createClass({displayName: "Character",
     );
   },
   render: function() {
-    if (!this.state.id) { return React.createElement("div", null); }
+    if (!this.state.character) { return React.createElement("div", null); }
 
-    var char = this.state;
+    var char = this.state.character;
     return React.createElement("div", null, 
       React.createElement("h3", null, char.cid, " ", React.createElement("button", {type: "submit", className: "btn btn-default", 
         onClick: this.toggleEdit}, 

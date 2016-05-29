@@ -124,7 +124,7 @@ var Stories = React.createClass({
     };
     return <div style={{border: "1px solid #ddd", borderTop: 0,
       backgroundColor: "white", padding: "0.5em"}}>
-      <h3 style={{display: "inline-block"}}>Stories</h3>
+      <h2 style={{display: "inline-block"}}>Stories</h2>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
@@ -155,7 +155,9 @@ var Story = React.createClass({
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -176,7 +178,7 @@ var Story = React.createClass({
   },
   updateHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.put("/api" + url,
       JSON.stringify({title: this.refs.title.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -185,7 +187,9 @@ var Story = React.createClass({
       if (payload.status === 200) {
         this.props.opts.updateUniverse();
         this.toggleEdit();
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -193,14 +197,16 @@ var Story = React.createClass({
   },
   poseHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.post("/api" + url + "/pose",
       JSON.stringify({pose: this.refs.pose.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
         this.refs.pose.value = "";
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -209,14 +215,16 @@ var Story = React.createClass({
   },
   unposeHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
     promise.del("/api" + url + "/pose",
       JSON.stringify({num: e.currentTarget.dataset.num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.setState(payload.body);
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -228,29 +236,28 @@ var Story = React.createClass({
   renderEdit: function() {
     return <form className="form-inline" onSubmit={this.updateHandler}>
       <input className="form-control" placeholder="Title" ref="title"
-        defaultValue={this.state.title} />
+        defaultValue={this.state.story.title} />
       <input type="submit" className="btn btn-default" value="Update" />
     </form>;
   },
   renderPlain: function() {
-    return this.state.poses.map(function(pose, i) {
-      return <div className="row" key={i}>
-        <div className="col-md-3">{
-          new Date(pose[0] * 1000).format('M jS Y H:i')
-        }
-        <a href="#" style={{marginLeft: "2em"}} onClick={this.unposeHandler}
-          data-num={pose[0]}>
-          <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-        </a>
-        </div>
-        <div className="col-md-9"><pre>{pose[1]}</pre></div>
+    return this.state.story.poses.map(function(pose) {
+      return <div className="col-md-12" key={pose[0]}>
+        <blockquote>
+          <p style={{whiteSpace: "pre-line"}}>{pose[1]}</p>
+          <footer>#{pose[0]}
+          <a href="#" style={{marginLeft: "2em"}} onClick={this.unposeHandler}
+            data-num={pose[0]}>
+            <span className="glyphicon glyphicon-trash" aria-hidden="true" />
+          </a></footer>
+        </blockquote>
       </div>;
     }.bind(this));
   },
   render: function() {
-    if (!this.state.id) { return <div />; }
+    if (!this.state.story) { return <div />; }
 
-    var story = this.state;
+    var story = this.state.story;
     return <div>
       <h3>{story.title} <button type="submit" className="btn btn-default"
         onClick={this.toggleEdit}>
@@ -258,10 +265,18 @@ var Story = React.createClass({
       </button></h3>
       {this.state.editable ? this.renderEdit() : ""}
       {this.renderPlain()}
-      <form className="form-inline" onSubmit={this.poseHandler}>
-        <textarea className="form-control" placeholder="Pose" ref="pose" />
-        <input type="submit" className="btn btn-default" value="Pose" />
+      <div className="row">
+      <form onSubmit={this.poseHandler}>
+        <div className="form-group col-md-12">
+          <textarea className="form-control" placeholder="Pose" ref="pose"
+            rows="5" />
+        </div>
+        <div className="col-md-3">
+        <input type="submit" className="btn btn-primary form-control"
+          value="Pose" />
+        </div>
       </form>
+      </div>
     </div>;
   }
 });
