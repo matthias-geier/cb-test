@@ -124,7 +124,7 @@ var Stories = React.createClass({
     };
     return <div style={{border: "1px solid #ddd", borderTop: 0,
       backgroundColor: "white", padding: "0.5em"}}>
-      <h2 style={{display: "inline-block"}}>Stories</h2>
+      <h3 style={{display: "inline-block"}}>Stories</h3>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
