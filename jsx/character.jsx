@@ -187,7 +187,9 @@ var Character = React.createClass({
       var payload = JSON.parse(text);
       if (payload.status === 200) {
         this.toggleEdit();
-        this.setState(payload.body);
+        var state = this.state;
+        state.character = payload.body;
+        this.setState(state);
         this.filterUnused(Object.keys(payload.body));
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -211,8 +213,8 @@ var Character = React.createClass({
     var unused = this.editableFields().filter(function(elem) {
       return !fieldset.includes(elem);
     });
-    var state = this.state.character;
-    unused.forEach(function(elem) { delete(state[elem]) });
+    var state = this.state;
+    unused.forEach(function(elem) { delete(state.character[elem]) });
     this.setState(state);
   },
   editableFields: function() {

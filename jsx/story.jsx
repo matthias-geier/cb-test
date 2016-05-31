@@ -150,6 +150,13 @@ var Story = React.createClass({
   storyUrl: function() {
     return "/universe/" + this.props.uid + "/story/" + this.props.id;
   },
+  poseValue: function() {
+    var state = this.state;
+    if (state.story.poses.length === 0) { return ""; }
+    var has_preview = state.story.poses[state.story.poses.length - 1][0] === "";
+    return (has_preview) ? state.story.poses[state.story.poses.length - 1][1] :
+      "";
+  },
   update: function() {
     promise.get("/api" + this.storyUrl()).
       then(function(err, text, xhr) {
@@ -185,11 +192,11 @@ var Story = React.createClass({
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.props.opts.updateUniverse();
         this.toggleEdit();
         var state = this.state;
         state.story = payload.body;
         this.setState(state);
+        this.props.opts.updateUniverse();
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -212,6 +219,27 @@ var Story = React.createClass({
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
+  },
+  poseChangeHandler: function(e) {
+    e.preventDefault();
+    var pose = this.refs.pose.value;
+    var state = this.state;
+    var pose_count = state.story.poses.length;
+    var has_preview = pose_count > 0 &&
+      state.story.poses[pose_count - 1][0] === "";
+    if (!pose || pose.length === 0) {
+      if (has_preview) {
+        state.story.poses.splice(pose_count - 1, 1);
+      }
+    } else {
+      if (!has_preview) {
+        state.story.poses.splice(pose_count === 0 ? 0 : pose_count -1, 0,
+          ["", ""]);
+        pose_count++;
+      }
+      state.story.poses[pose_count - 1][1] = pose;
+    }
+    this.setState(state);
   },
   unposeHandler: function(e) {
     e.preventDefault();
@@ -244,7 +272,7 @@ var Story = React.createClass({
     return this.state.story.poses.map(function(pose) {
       return <div className="col-md-12" key={pose[0]}>
         <blockquote>
-          <p style={{whiteSpace: "pre-line"}}>{pose[1]}</p>
+          <p style={{whiteSpace: "pre-line"}} dangerouslySetInnerHTML={this.renderPose(pose[1])} />
           <footer>#{pose[0]}
           <a href="#" style={{marginLeft: "2em"}} onClick={this.unposeHandler}
             data-num={pose[0]}>
@@ -253,6 +281,11 @@ var Story = React.createClass({
         </blockquote>
       </div>;
     }.bind(this));
+  },
+  renderPose: function(pose) {
+    return {__html: pose.replace(/\[([^|]+)\|([^\]]+)\]/g,
+      "<a href=\"/universe/" + this.props.uid + "/character/$1\" " +
+      "target=\"window\">$2</a>") };
   },
   render: function() {
     if (!this.state.story) { return <div />; }
@@ -269,7 +302,8 @@ var Story = React.createClass({
       <form onSubmit={this.poseHandler}>
         <div className="form-group col-md-12">
           <textarea className="form-control" placeholder="Pose" ref="pose"
-            rows="5" />
+            rows="5" value={this.poseValue()}
+            onChange={this.poseChangeHandler} />
         </div>
         <div className="col-md-3">
         <input type="submit" className="btn btn-primary form-control"

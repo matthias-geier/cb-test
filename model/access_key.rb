@@ -4,7 +4,7 @@ module AccessKey
   ACCESS_LIST_KEY = "access_keys"
 
   def new_access_key
-    SecureRandom.hex(8)
+    SecureRandom.hex(20)
   end
 
   def access_list_key(uid)
