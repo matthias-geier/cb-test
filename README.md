@@ -3,6 +3,7 @@
 Bugs:
 
 Creating a story -> click Characters -> return to Story list -> Story is missing
+Edit a character -> Create new row -> Save -> New fields show after reload
 
 Features:
 
