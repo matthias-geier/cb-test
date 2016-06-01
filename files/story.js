@@ -152,10 +152,10 @@ var Story = React.createClass({displayName: "Story",
   },
   poseValue: function() {
     var state = this.state;
-    if (state.story.poses.length === 0) { return ""; }
-    var has_preview = state.story.poses[state.story.poses.length - 1][0] === "";
-    return (has_preview) ? state.story.poses[state.story.poses.length - 1][1] :
-      "";
+    var pose_count = state.story.poses.length;
+    if (pose_count === 0) { return ""; }
+    var has_preview = state.story.poses[pose_count - 1][0] === "new";
+    return (has_preview) ? state.story.poses[pose_count - 1][1] : "";
   },
   update: function() {
     promise.get("/api" + this.storyUrl()).
@@ -226,15 +226,14 @@ var Story = React.createClass({displayName: "Story",
     var state = this.state;
     var pose_count = state.story.poses.length;
     var has_preview = pose_count > 0 &&
-      state.story.poses[pose_count - 1][0] === "";
+      state.story.poses[pose_count - 1][0] === "new";
     if (!pose || pose.length === 0) {
       if (has_preview) {
         state.story.poses.splice(pose_count - 1, 1);
       }
     } else {
       if (!has_preview) {
-        state.story.poses.splice(pose_count === 0 ? 0 : pose_count -1, 0,
-          ["", ""]);
+        state.story.poses.splice(pose_count, 0, ["new", ""]);
         pose_count++;
       }
       state.story.poses[pose_count - 1][1] = pose;
@@ -272,7 +271,8 @@ var Story = React.createClass({displayName: "Story",
     return this.state.story.poses.map(function(pose) {
       return React.createElement("div", {className: "col-md-12", key: pose[0]}, 
         React.createElement("blockquote", null, 
-          React.createElement("p", {style: {whiteSpace: "pre-line"}, dangerouslySetInnerHTML: this.renderPose(pose[1])}), 
+          React.createElement("p", {style: {whiteSpace: "pre-line"}, 
+            dangerouslySetInnerHTML: this.renderPose(pose[1])}), 
           React.createElement("footer", null, "#", pose[0], 
           React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
             "data-num": pose[0]}, 
@@ -283,9 +283,16 @@ var Story = React.createClass({displayName: "Story",
     }.bind(this));
   },
   renderPose: function(pose) {
-    return {__html: pose.replace(/\[([^|]+)\|([^\]]+)\]/g,
-      "<a href=\"/universe/" + this.props.uid + "/character/$1\" " +
-      "target=\"window\">$2</a>") };
+    pose = String(pose).
+      replace(/&/g, "&amp;").
+      replace(/</g, "&lt;").
+      replace(/>/g, "&gt;").
+      replace(/"/g, "&quot;").
+      replace(/'/g, "&#039;").
+      replace(/\//g, "&#x2F;").
+      replace(/\[([^|]+)\|([^\]]+)\]/g, "<a href=\"/universe/" +
+        this.props.uid + "/character/$1\" " + "target=\"window\">$2</a>");
+    return {__html: pose };
   },
   render: function() {
     if (!this.state.story) { return React.createElement("div", null); }
