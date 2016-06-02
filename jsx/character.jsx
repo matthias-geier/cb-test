@@ -211,7 +211,7 @@ var Character = React.createClass({
   },
   filterUnused: function(fieldset) {
     var unused = this.editableFields().filter(function(elem) {
-      return !fieldset.includes(elem);
+      return fieldset.indexOf(elem) === -1;
     });
     var state = this.state;
     unused.forEach(function(elem) { delete(state.character[elem]) });
@@ -220,7 +220,7 @@ var Character = React.createClass({
   editableFields: function() {
     var blocked = ["id", "cid", "uid", "updated_at", "editable"];
     return Object.keys(this.state.character).filter(function(val) {
-      return !blocked.includes(val);
+      return blocked.indexOf(val) === -1;
     });
   },
   renderPlain: function() {
