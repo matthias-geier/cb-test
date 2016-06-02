@@ -88,6 +88,7 @@ module Story
   end
 
   def unpose(uid, sid, num)
+    return to_h(uid, sid) if num !~ /^\d+$/
     num = num.to_i
     $redis.zrangebyscore(pose_key(uid, sid), num, "+inf").
       each_with_index do |pose, i|
