@@ -66,6 +66,10 @@ class UniverseApi < Grape::API
   format :json
   prefix :api
 
+  before do
+    header "Cache-Control", "no-cache"
+  end
+
   helpers SessionHelpers
   helpers StoryHelpers
 
