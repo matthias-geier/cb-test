@@ -257,6 +257,23 @@ var Story = React.createClass({displayName: "Story",
       }
     }.bind(this));
   },
+  poseSwapHandler: function(e) {
+    e.preventDefault();
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
+    promise.put("/api" + url + "/pose/swap",
+      JSON.stringify({num: e.currentTarget.dataset.num}),
+      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (payload.status === 200) {
+        var state = this.state;
+        state.story = payload.body;
+        this.setState(state);
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
+  },
   componentDidMount: function() {
     this.update();
   },
@@ -273,11 +290,23 @@ var Story = React.createClass({displayName: "Story",
         React.createElement("blockquote", null, 
           React.createElement("p", {style: {whiteSpace: "pre-line"}, 
             dangerouslySetInnerHTML: this.renderPose(pose[1])}), 
-          React.createElement("footer", null, "#", pose[0], 
-          React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
-            "data-num": pose[0]}, 
-            React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
-          ))
+          React.createElement("footer", null, 
+            "#", pose[0], 
+            React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+              onClick: this.poseSwapHandler, "data-num": +(pose[0]) - 1}, 
+              React.createElement("span", {className: "glyphicon glyphicon-chevron-up", 
+                "aria-hidden": "true"})
+            ), 
+            React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+              onClick: this.poseSwapHandler, "data-num": pose[0]}, 
+              React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
+                "aria-hidden": "true"})
+            ), 
+            React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
+              "data-num": pose[0]}, 
+              React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+            )
+          )
         )
       );
     }.bind(this));

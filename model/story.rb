@@ -103,4 +103,19 @@ module Story
 
     return to_h(uid, sid)
   end
+
+  def swap(uid, sid, num)
+    return to_h(uid, sid) if num !~ /^\d+$/
+    num = num.to_i
+    pose, next_pose = $redis.zrangebyscore(pose_key(uid, sid), num, num + 1)
+
+    return to_h(uid, sid) if pose.nil? || next_pose.nil?
+
+    $redis.zrem(pose_key(uid, sid), next_pose)
+    $redis.zincrby(pose_key(uid, sid), 1, pose)
+    $redis.zadd(pose_key(uid, sid), num, next_pose)
+    touch(story_key(uid, sid))
+
+    return to_h(uid, sid)
+  end
 end

@@ -271,6 +271,14 @@ class UniverseApi < Grape::API
             {status: 200, body: Story.unpose(params[:uid], params[:sid],
               params[:num])}
           end
+
+          params do
+            requires :num, type: String, desc: "Pose num"
+          end
+          put "pose/swap" do
+            {status: 200, body: Story.swap(params[:uid], params[:sid],
+              params[:num])}
+          end
         end
       end
     end
