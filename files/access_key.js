@@ -85,7 +85,8 @@ var AccessKey = React.createClass({displayName: "AccessKey",
     return React.createElement("div", null, 
       React.createElement("div", {style: {display: "inline-block"}}, 
         React.createElement("a", {href: "#", onClick: this.toggleEditHandler}, 
-          React.createElement("span", {className: "glyphicon glyphicon-lock", "aria-hidden": "true"})
+          React.createElement("span", {style: {fontSize: "1.4em"}, 
+            className: "glyphicon glyphicon-lock", "aria-hidden": "true"})
         )
       ), " ", React.createElement("div", {style: {display: "inline-block", marginLeft: "0.5em"}}, 
         this.props.children

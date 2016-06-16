@@ -85,7 +85,8 @@ var AccessKey = React.createClass({
     return <div>
       <div style={{display: "inline-block"}}>
         <a href="#" onClick={this.toggleEditHandler}>
-          <span className="glyphicon glyphicon-lock" aria-hidden="true" />
+          <span style={{fontSize: "1.4em"}}
+            className="glyphicon glyphicon-lock" aria-hidden="true" />
         </a>
       </div> <div style={{display: "inline-block", marginLeft: "0.5em"}}>
         {this.props.children}
