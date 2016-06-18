@@ -108,7 +108,7 @@ class UniverseApi < Grape::API
 
     params do
       requires :uid, type: String, desc: "Universe id"
-      optional :title, type: String, desc: "Story title"
+      optional :title, type: String, desc: "Universe title"
     end
     put ":uid" do
       validate_uid!
@@ -215,6 +215,14 @@ class UniverseApi < Grape::API
         end
 
         params do
+          requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
+        end
+        put "swap" do
+          Story.swap_story(params[:uid], params[:num])
+          {status: 200, body: Story.list(params[:uid])}
+        end
+
+        params do
           requires :sid, type: String, desc: "Story id"
         end
         get ":sid" do
@@ -223,7 +231,7 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :title, type: String, desc: "Story title"
+          requires :title, type: String, allow_blank: false, desc: "Story title"
         end
         post do
           {status: 200, body: Story.create(params[:uid], declared(params))}
@@ -231,7 +239,7 @@ class UniverseApi < Grape::API
 
         params do
           requires :sid, type: String, desc: "Story id"
-          optional :title, type: String, desc: "Story title"
+          optional :title, type: String, allow_blank: false, desc: "Story title"
         end
         put ":sid" do
           validate_sid!
@@ -273,11 +281,11 @@ class UniverseApi < Grape::API
           end
 
           params do
-            requires :num, type: String, desc: "Pose num"
+            requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
           end
           put "pose/swap" do
-            {status: 200, body: Story.swap(params[:uid], params[:sid],
-              params[:num])}
+            Story.swap_pose(params[:uid], params[:sid], params[:num])
+            {status: 200, body: Story.to_h(params[:uid], params[:sid])}
           end
         end
       end

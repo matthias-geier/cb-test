@@ -80,7 +80,27 @@ var Stories = React.createClass({displayName: "Stories",
       if (payload.status === 200) {
         this.closeStoryIf(story);
         var state = this.state;
-        state.stories.splice(state.stories.indexOf(story), 1);
+        var i = 0;
+        for(; state.stories[i].id != story; i++);
+        state.stories.splice(i, 1);
+        this.setState(state);
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
+  },
+  storySwapHandler: function(e) {
+    e.preventDefault();
+    var url = "/universe/" + this.props.uid + "/story/swap";
+    promise.put("/api" + url,
+      JSON.stringify({num: e.currentTarget.dataset.num}),
+      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (payload.status === 200) {
+        var state = this.state;
+        state.stories.splice(0, state.stories.length);
+        payload.body.forEach(function(elem) { state.stories.push(elem); });
         this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -100,6 +120,16 @@ var Stories = React.createClass({displayName: "Stories",
       return React.createElement("li", {key: elem+i}, 
         React.createElement("a", {href: "/universe/" + this.props.id + "/story/" + elem.id, 
           "data-story": elem.id, onClick: this.storyHrefHandler}, elem.title), 
+        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+          onClick: this.storySwapHandler, "data-num": i}, 
+          React.createElement("span", {className: "glyphicon glyphicon-chevron-up", 
+            "aria-hidden": "true"})
+        ), 
+        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+          onClick: this.storySwapHandler, "data-num": i+1}, 
+          React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
+            "aria-hidden": "true"})
+        ), 
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
           "data-story": elem.id}, 
           React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})

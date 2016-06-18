@@ -21,7 +21,9 @@ module Story
   end
 
   def list(uid)
-    $redis.zrange(list_key(uid), 0, -1).map { |sid| to_h(uid, sid, false) }
+    $redis.zrange(list_key(uid), 0, -1, with_scores: true).map do |sid, key|
+      to_h(uid, sid, false).merge("score" => key.to_i)
+    end
   end
 
   def exists?(uid, sid)
@@ -59,7 +61,19 @@ module Story
   def delete(uid, sid)
     $redis.del(story_key(uid, sid))
     $redis.del(pose_key(uid, sid))
-    $redis.zrem(list_key(uid), sid)
+    num = $redis.zscore(list_key(uid), sid).to_i
+    deleted = false
+    $redis.zrangebyscore(list_key(uid), num, "+inf").
+      each_with_index do |story, i|
+
+      if i == 0
+        deleted = $redis.zrem(list_key(uid), story)
+        break unless deleted
+      else
+        $redis.zincrby(list_key(uid), -1, story)
+      end
+    end
+    return deleted
   end
 
   def touch(full_id)
@@ -104,18 +118,24 @@ module Story
     return to_h(uid, sid)
   end
 
-  def swap(uid, sid, num)
-    return to_h(uid, sid) if num !~ /^\d+$/
+  def swap_pose(uid, sid, num)
+    key = pose_key(uid, sid)
+    touch(story_key(uid, sid)) if swap(key, num)
+  end
+
+  def swap_story(uid, num)
+    swap(list_key(uid), num)
+  end
+
+  def swap(full_id, num)
     num = num.to_i
-    pose, next_pose = $redis.zrangebyscore(pose_key(uid, sid), num, num + 1)
+    elem, next_elem = $redis.zrangebyscore(full_id, num, num + 1)
 
-    return to_h(uid, sid) if pose.nil? || next_pose.nil?
+    return if elem.nil? || next_elem.nil?
 
-    $redis.zrem(pose_key(uid, sid), next_pose)
-    $redis.zincrby(pose_key(uid, sid), 1, pose)
-    $redis.zadd(pose_key(uid, sid), num, next_pose)
-    touch(story_key(uid, sid))
-
-    return to_h(uid, sid)
+    $redis.zrem(full_id, next_elem)
+    $redis.zincrby(full_id, 1, elem)
+    $redis.zadd(full_id, num, next_elem)
+    return true
   end
 end
