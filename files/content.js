@@ -29,10 +29,11 @@ var Content = React.createClass({displayName: "Content",
       split("#")[0];
   },
   errors: function() {
+    if (this.state.errors.length === 0) { return ""; }
     return React.createElement("div", {className: "row"}, 
-      this.state.errors.length > 0 ? React.createElement("h3", null, "Errors") : "", 
+      React.createElement("h3", null, "Errors"), 
       this.state.errors.map(function(err, i) {
-      return React.createElement("div", {className: "col-md-12", key: i}, 
+      return React.createElement("div", {className: "col-xs-12 col-md-12", key: i}, 
         React.createElement("p", {className: "bg-danger"}, err)
       ); }.bind(this))
     );

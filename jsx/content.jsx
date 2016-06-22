@@ -29,10 +29,11 @@ var Content = React.createClass({
       split("#")[0];
   },
   errors: function() {
+    if (this.state.errors.length === 0) { return ""; }
     return <div className="row">
-      {this.state.errors.length > 0 ? <h3>Errors</h3> : ""}
+      <h3>Errors</h3>
       {this.state.errors.map(function(err, i) {
-      return <div className="col-md-12" key={i}>
+      return <div className="col-xs-12 col-md-12" key={i}>
         <p className="bg-danger">{err}</p>
       </div>; }.bind(this))}
     </div>;

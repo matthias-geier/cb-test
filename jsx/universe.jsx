@@ -96,7 +96,7 @@ var Universes = React.createClass({
       updateUniverses: this.update,
       updateUniverse: this.updateUniverse
     };
-    return <div>
+    return <div className="row">
       <Session opts={opts}>
         <h1 style={{display: "inline-block"}}>
           <a href="#" onClick={this.hrefResetHandler}>Universes</a>
@@ -109,7 +109,7 @@ var Universes = React.createClass({
           </button>
         </form>
       </Session>
-      <ul>
+      <ul className="col-xs-11 col-xs-offset-1 col-md-11 col-md-offset-1">
       {this.state.universes.map(function(elem) {
         return <li key={elem.id+elem.title}>
           <a href={"/universe/" + elem.id} onClick={this.hrefHandler}
@@ -227,7 +227,7 @@ var Universe = React.createClass({
     var universe = this.state.universe;
     var title = universe.title || universe.id;
     var current = this.currentRoute();
-    return <div>
+    return <div className="col-xs-12 col-md-12" style={{backgroundColor: "#e5e5e5", minHeight: "50%", borderRadius: "5px"}}>
       <AccessKey uid={universe.id} opts={opts}>
         <h2 style={{display: "inline-block"}}>
           <a href="#" onClick={this.handleHref(title, "")}>{title}</a>

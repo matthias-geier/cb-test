@@ -42,10 +42,16 @@ var Stories = React.createClass({
   storyHrefHandler: function(e) {
     e.preventDefault();
     var story = e.target.dataset.story;
-    var url = "/universe/" + this.props.uid + "/story/" + story;
-    window.history.pushState({}, e.target.innerHTML, url);
+    var url = "/universe/" + this.props.uid + "/story";
     var state = this.state;
-    state.story = story;
+    if (story) {
+      url += "/" + story;
+      window.history.pushState({}, e.target.innerHTML, url);
+      state.story = story;
+    } else {
+      window.history.pushState({}, "", url);
+      delete(state.story);
+    }
     this.setState(state);
   },
   createNewHandler: function(e) {
@@ -118,8 +124,8 @@ var Stories = React.createClass({
   renderStoryList: function() {
     return this.state.stories.map(function(elem, i) {
       return <li key={elem+i}>
-        <a href={"/universe/" + this.props.id + "/story/" + elem.id}
-          data-story={elem.id} onClick={this.storyHrefHandler}>{elem.title}</a>
+        <a href="#" data-story={elem.id}
+          onClick={this.storyHrefHandler}>{elem.title}</a>
         <a href="#" style={{marginLeft: "2em"}}
           onClick={this.storySwapHandler} data-num={i}>
           <span className="glyphicon glyphicon-chevron-up"
@@ -153,8 +159,10 @@ var Stories = React.createClass({
       updateStory: this.updateStory
     };
     return <div style={{border: "1px solid #ddd", borderTop: 0,
-      backgroundColor: "white", padding: "0.5em"}}>
-      <h3 style={{display: "inline-block"}}>Stories</h3>
+      backgroundColor: "white"}} className="col-xs-12 col-md-12">
+      <h3 style={{display: "inline-block"}}>
+        <a href="#" onClick={this.storyHrefHandler}>Stories</a>
+      </h3>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
@@ -357,26 +365,24 @@ var Story = React.createClass({
     if (!this.state.story) { return <div />; }
 
     var story = this.state.story;
-    return <div>
+    return <div className="col-xs-12 col-md-12">
       <h3>{story.title} <button type="submit" className="btn btn-default"
         onClick={this.toggleEdit}>
         <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
       </button></h3>
       {this.state.editable ? this.renderEdit() : ""}
       {this.renderPlain()}
-      <div className="row">
-      <form onSubmit={this.poseHandler}>
+      <form onSubmit={this.poseHandler} className="row">
         <div className="form-group col-md-12">
           <textarea className="form-control" placeholder="Pose" ref="pose"
             rows="5" value={this.poseValue()}
             onChange={this.poseChangeHandler} />
         </div>
         <div className="col-md-3">
-        <input type="submit" className="btn btn-primary form-control"
-          value="Pose" />
+          <input type="submit" className="btn btn-primary form-control"
+            value="Pose" />
         </div>
       </form>
-      </div>
     </div>;
   }
 });

@@ -41,11 +41,16 @@ var Characters = React.createClass({
   },
   charHrefHandler: function(e) {
     e.preventDefault();
-    var char = e.target.innerHTML;
-    var url = "/universe/" + this.props.uid + "/character/" + char;
-    window.history.pushState({}, char, url);
+    var char = e.target.dataset.character;
+    var url = "/universe/" + this.props.uid + "/character";
     var state = this.state;
-    state.character = char;
+    if (char) {
+      url += "/" + char;
+      state.character = char;
+    } else {
+      delete(state.character);
+    }
+    window.history.pushState({}, char, url);
     this.setState(state);
   },
   createNewHandler: function(e) {
@@ -97,7 +102,7 @@ var Characters = React.createClass({
   renderCharList: function() {
     return this.state.characters.map(function(elem, i) {
       return <li key={elem+i}>
-        <a href={"/universe/" + this.props.id + "/character/" + elem}
+        <a href="#" data-character={elem}
           onClick={this.charHrefHandler}>{elem}</a>
         <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
           data-character={elem}>
@@ -121,8 +126,10 @@ var Characters = React.createClass({
       updateCharacter: this.updateCharacter
     };
     return <div style={{border: "1px solid #ddd", borderTop: 0,
-      backgroundColor: "white", padding: "0.5em"}}>
-      <h3 style={{display: "inline-block"}}>Characters</h3>
+      backgroundColor: "white"}} className="col-xs-12 col-md-12">
+      <h3 style={{display: "inline-block"}}>
+        <a href="#" onClick={this.charHrefHandler}>Characters</a>
+      </h3>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
@@ -224,22 +231,47 @@ var Character = React.createClass({
     });
   },
   renderPlain: function() {
-    return <table className="table table-hover"><tbody>{
-      this.editableFields().map(function(key) {
-        return <tr key={key}>
-          <td>{key}</td><td>{this.state.character[key]}</td>
-        </tr>;
-      }.bind(this))
-    }</tbody></table>;
+    var pairs = [];
+    this.editableFields().forEach(function(key, i) {
+      if (i%2 === 0) {
+        pairs.push([key]);
+      } else {
+        pairs[pairs.length - 1].push(key);
+      }
+    });
+    return pairs.map(function(key_pair) {
+      return <div className="row" key={key_pair}>{
+        key_pair.map(function(key, i) {
+          return <div className="col-xs-6 col-md-6" key={key}>
+            <blockquote className={i%2 === 1 ? "blockquote-reverse" : ""}>
+              <p style={{whiteSpace: "pre-line"}} dangerouslySetInnerHTML={
+                this.renderText(this.state.character[key])} />
+              <footer style={{fontVariant: "small-caps"}}>{key}</footer>
+            </blockquote>
+          </div>;
+        }.bind(this))
+      }</div>;
+    }.bind(this));
+  },
+  renderText: function(text) {
+    text = String(text).
+      replace(/&/g, "&amp;").
+      replace(/</g, "&lt;").
+      replace(/>/g, "&gt;").
+      replace(/"/g, "&quot;").
+      replace(/'/g, "&#039;").
+      replace(/\//g, "&#x2F;");
+    return {__html: text };
   },
   renderEditable: function() {
     return <form className="form-inline" onSubmit={this.updateHandler}>
       <table className="table table-hover"><tbody>{
         this.editableFields().map(function(key, i) {
           return <tr key={key}>
-            <td><input className="form-control" ref={"key"+i}
+            <td style={{width: "25%"}}><input className="form-control" ref={"key"+i}
               defaultValue={key} /></td>
-            <td><input className="form-control" ref={"value"+i}
+            <td><textarea className="form-control"
+              ref={"value"+i} rows="3" style={{width: "70%"}}
               defaultValue={this.state.character[key]} /></td>
           </tr>;
         }.bind(this))
@@ -248,18 +280,22 @@ var Character = React.createClass({
         onClick={this.addFieldHandler}>
         <span className="glyphicon glyphicon-plus" aria-hidden="true" />
       </button>
-      <input type="submit" className="btn btn-default" value="Save" />
+      <input type="submit" className="btn btn-default input-sm" value="Save" />
     </form>;
   },
   render: function() {
     if (!this.state.character) { return <div />; }
 
     var char = this.state.character;
-    return <div>
-      <h3>{char.cid} <button type="submit" className="btn btn-default"
-        onClick={this.toggleEdit}>
-        <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
-      </button></h3>
+    return <div className="col-xs-12 col-md-12">
+      <h3 style={{display: "inline-block", textTransform: "uppercase"}}>{char.cid}</h3>
+      <form className="form-inline" style={
+        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
+        <button type="submit" className="btn btn-default"
+          onClick={this.toggleEditHandler}>
+          <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
+        </button>
+      </form>
       {this.state.editable ? this.renderEditable() : this.renderPlain()}
     </div>;
   }

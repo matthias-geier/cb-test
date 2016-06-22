@@ -41,11 +41,16 @@ var Characters = React.createClass({displayName: "Characters",
   },
   charHrefHandler: function(e) {
     e.preventDefault();
-    var char = e.target.innerHTML;
-    var url = "/universe/" + this.props.uid + "/character/" + char;
-    window.history.pushState({}, char, url);
+    var char = e.target.dataset.character;
+    var url = "/universe/" + this.props.uid + "/character";
     var state = this.state;
-    state.character = char;
+    if (char) {
+      url += "/" + char;
+      state.character = char;
+    } else {
+      delete(state.character);
+    }
+    window.history.pushState({}, char, url);
     this.setState(state);
   },
   createNewHandler: function(e) {
@@ -97,7 +102,7 @@ var Characters = React.createClass({displayName: "Characters",
   renderCharList: function() {
     return this.state.characters.map(function(elem, i) {
       return React.createElement("li", {key: elem+i}, 
-        React.createElement("a", {href: "/universe/" + this.props.id + "/character/" + elem, 
+        React.createElement("a", {href: "#", "data-character": elem, 
           onClick: this.charHrefHandler}, elem), 
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
           "data-character": elem}, 
@@ -121,8 +126,10 @@ var Characters = React.createClass({displayName: "Characters",
       updateCharacter: this.updateCharacter
     };
     return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
-      backgroundColor: "white", padding: "0.5em"}}, 
-      React.createElement("h3", {style: {display: "inline-block"}}, "Characters"), 
+      backgroundColor: "white"}, className: "col-xs-12 col-md-12"}, 
+      React.createElement("h3", {style: {display: "inline-block"}}, 
+        React.createElement("a", {href: "#", onClick: this.charHrefHandler}, "Characters")
+      ), 
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
         React.createElement("button", {type: "submit", className: "btn btn-default", 
@@ -224,22 +231,47 @@ var Character = React.createClass({displayName: "Character",
     });
   },
   renderPlain: function() {
-    return React.createElement("table", {className: "table table-hover"}, React.createElement("tbody", null, 
-      this.editableFields().map(function(key) {
-        return React.createElement("tr", {key: key}, 
-          React.createElement("td", null, key), React.createElement("td", null, this.state.character[key])
-        );
-      }.bind(this))
-    ));
+    var pairs = [];
+    this.editableFields().forEach(function(key, i) {
+      if (i%2 === 0) {
+        pairs.push([key]);
+      } else {
+        pairs[pairs.length - 1].push(key);
+      }
+    });
+    return pairs.map(function(key_pair) {
+      return React.createElement("div", {className: "row", key: key_pair}, 
+        key_pair.map(function(key, i) {
+          return React.createElement("div", {className: "col-xs-6 col-md-6", key: key}, 
+            React.createElement("blockquote", {className: i%2 === 1 ? "blockquote-reverse" : ""}, 
+              React.createElement("p", {style: {whiteSpace: "pre-line"}, dangerouslySetInnerHTML: 
+                this.renderText(this.state.character[key])}), 
+              React.createElement("footer", {style: {fontVariant: "small-caps"}}, key)
+            )
+          );
+        }.bind(this))
+      );
+    }.bind(this));
+  },
+  renderText: function(text) {
+    text = String(text).
+      replace(/&/g, "&amp;").
+      replace(/</g, "&lt;").
+      replace(/>/g, "&gt;").
+      replace(/"/g, "&quot;").
+      replace(/'/g, "&#039;").
+      replace(/\//g, "&#x2F;");
+    return {__html: text };
   },
   renderEditable: function() {
     return React.createElement("form", {className: "form-inline", onSubmit: this.updateHandler}, 
       React.createElement("table", {className: "table table-hover"}, React.createElement("tbody", null, 
         this.editableFields().map(function(key, i) {
           return React.createElement("tr", {key: key}, 
-            React.createElement("td", null, React.createElement("input", {className: "form-control", ref: "key"+i, 
+            React.createElement("td", {style: {width: "25%"}}, React.createElement("input", {className: "form-control", ref: "key"+i, 
               defaultValue: key})), 
-            React.createElement("td", null, React.createElement("input", {className: "form-control", ref: "value"+i, 
+            React.createElement("td", null, React.createElement("textarea", {className: "form-control", 
+              ref: "value"+i, rows: "3", style: {width: "70%"}, 
               defaultValue: this.state.character[key]}))
           );
         }.bind(this))
@@ -248,18 +280,22 @@ var Character = React.createClass({displayName: "Character",
         onClick: this.addFieldHandler}, 
         React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
       ), 
-      React.createElement("input", {type: "submit", className: "btn btn-default", value: "Save"})
+      React.createElement("input", {type: "submit", className: "btn btn-default input-sm", value: "Save"})
     );
   },
   render: function() {
     if (!this.state.character) { return React.createElement("div", null); }
 
     var char = this.state.character;
-    return React.createElement("div", null, 
-      React.createElement("h3", null, char.cid, " ", React.createElement("button", {type: "submit", className: "btn btn-default", 
-        onClick: this.toggleEdit}, 
-        React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
-      )), 
+    return React.createElement("div", {className: "col-xs-12 col-md-12"}, 
+      React.createElement("h3", {style: {display: "inline-block", textTransform: "uppercase"}}, char.cid), 
+      React.createElement("form", {className: "form-inline", style: 
+        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
+        React.createElement("button", {type: "submit", className: "btn btn-default", 
+          onClick: this.toggleEditHandler}, 
+          React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+        )
+      ), 
       this.state.editable ? this.renderEditable() : this.renderPlain()
     );
   }

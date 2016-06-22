@@ -42,10 +42,16 @@ var Stories = React.createClass({displayName: "Stories",
   storyHrefHandler: function(e) {
     e.preventDefault();
     var story = e.target.dataset.story;
-    var url = "/universe/" + this.props.uid + "/story/" + story;
-    window.history.pushState({}, e.target.innerHTML, url);
+    var url = "/universe/" + this.props.uid + "/story";
     var state = this.state;
-    state.story = story;
+    if (story) {
+      url += "/" + story;
+      window.history.pushState({}, e.target.innerHTML, url);
+      state.story = story;
+    } else {
+      window.history.pushState({}, "", url);
+      delete(state.story);
+    }
     this.setState(state);
   },
   createNewHandler: function(e) {
@@ -118,8 +124,8 @@ var Stories = React.createClass({displayName: "Stories",
   renderStoryList: function() {
     return this.state.stories.map(function(elem, i) {
       return React.createElement("li", {key: elem+i}, 
-        React.createElement("a", {href: "/universe/" + this.props.id + "/story/" + elem.id, 
-          "data-story": elem.id, onClick: this.storyHrefHandler}, elem.title), 
+        React.createElement("a", {href: "#", "data-story": elem.id, 
+          onClick: this.storyHrefHandler}, elem.title), 
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
           onClick: this.storySwapHandler, "data-num": i}, 
           React.createElement("span", {className: "glyphicon glyphicon-chevron-up", 
@@ -153,8 +159,10 @@ var Stories = React.createClass({displayName: "Stories",
       updateStory: this.updateStory
     };
     return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
-      backgroundColor: "white", padding: "0.5em"}}, 
-      React.createElement("h3", {style: {display: "inline-block"}}, "Stories"), 
+      backgroundColor: "white"}, className: "col-xs-12 col-md-12"}, 
+      React.createElement("h3", {style: {display: "inline-block"}}, 
+        React.createElement("a", {href: "#", onClick: this.storyHrefHandler}, "Stories")
+      ), 
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
         React.createElement("button", {type: "submit", className: "btn btn-default", 
@@ -357,25 +365,23 @@ var Story = React.createClass({displayName: "Story",
     if (!this.state.story) { return React.createElement("div", null); }
 
     var story = this.state.story;
-    return React.createElement("div", null, 
+    return React.createElement("div", {className: "col-xs-12 col-md-12"}, 
       React.createElement("h3", null, story.title, " ", React.createElement("button", {type: "submit", className: "btn btn-default", 
         onClick: this.toggleEdit}, 
         React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
       )), 
       this.state.editable ? this.renderEdit() : "", 
       this.renderPlain(), 
-      React.createElement("div", {className: "row"}, 
-      React.createElement("form", {onSubmit: this.poseHandler}, 
+      React.createElement("form", {onSubmit: this.poseHandler, className: "row"}, 
         React.createElement("div", {className: "form-group col-md-12"}, 
           React.createElement("textarea", {className: "form-control", placeholder: "Pose", ref: "pose", 
             rows: "5", value: this.poseValue(), 
             onChange: this.poseChangeHandler})
         ), 
         React.createElement("div", {className: "col-md-3"}, 
-        React.createElement("input", {type: "submit", className: "btn btn-primary form-control", 
-          value: "Pose"})
+          React.createElement("input", {type: "submit", className: "btn btn-primary form-control", 
+            value: "Pose"})
         )
-      )
       )
     );
   }

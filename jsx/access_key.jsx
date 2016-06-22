@@ -82,7 +82,7 @@ var AccessKey = React.createClass({
     </div>;
   },
   render: function() {
-    return <div>
+    return <div className="col-xs-12 col-md-12">
       <div style={{display: "inline-block"}}>
         <a href="#" onClick={this.toggleEditHandler}>
           <span style={{fontSize: "1.4em"}}

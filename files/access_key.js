@@ -82,7 +82,7 @@ var AccessKey = React.createClass({displayName: "AccessKey",
     );
   },
   render: function() {
-    return React.createElement("div", null, 
+    return React.createElement("div", {className: "col-xs-12 col-md-12"}, 
       React.createElement("div", {style: {display: "inline-block"}}, 
         React.createElement("a", {href: "#", onClick: this.toggleEditHandler}, 
           React.createElement("span", {style: {fontSize: "1.4em"}, 

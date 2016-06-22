@@ -96,7 +96,7 @@ var Universes = React.createClass({displayName: "Universes",
       updateUniverses: this.update,
       updateUniverse: this.updateUniverse
     };
-    return React.createElement("div", null, 
+    return React.createElement("div", {className: "row"}, 
       React.createElement(Session, {opts: opts}, 
         React.createElement("h1", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.hrefResetHandler}, "Universes")
@@ -109,7 +109,7 @@ var Universes = React.createClass({displayName: "Universes",
           )
         )
       ), 
-      React.createElement("ul", null, 
+      React.createElement("ul", {className: "col-xs-11 col-xs-offset-1 col-md-11 col-md-offset-1"}, 
       this.state.universes.map(function(elem) {
         return React.createElement("li", {key: elem.id+elem.title}, 
           React.createElement("a", {href: "/universe/" + elem.id, onClick: this.hrefHandler, 
@@ -227,7 +227,7 @@ var Universe = React.createClass({displayName: "Universe",
     var universe = this.state.universe;
     var title = universe.title || universe.id;
     var current = this.currentRoute();
-    return React.createElement("div", null, 
+    return React.createElement("div", {className: "col-xs-12 col-md-12", style: {backgroundColor: "#e5e5e5", minHeight: "50%", borderRadius: "5px"}}, 
       React.createElement(AccessKey, {uid: universe.id, opts: opts}, 
         React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
