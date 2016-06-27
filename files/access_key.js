@@ -71,7 +71,9 @@ var AccessKey = React.createClass({displayName: "AccessKey",
       ), 
       this.state.access_keys.map(function(elem) {
         return React.createElement("div", {className: "control-group", key: elem}, 
-          React.createElement("p", {style: {display: "inline-block"}}, elem), 
+          React.createElement("p", {style: {display: "inline-block"}}, 
+            React.createElement("a", {href: "/key/" + elem}, elem)
+          ), 
           React.createElement("button", {type: "submit", className: "btn btn-default", 
             onClick: this.destroyHandler, "data-access-key": elem, 
             style: {marginLeft: "0.5em"}}, 

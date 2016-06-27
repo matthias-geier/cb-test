@@ -71,7 +71,9 @@ var AccessKey = React.createClass({
       </form>
       {this.state.access_keys.map(function(elem) {
         return <div className="control-group" key={elem}>
-          <p style={{display: "inline-block"}}>{elem}</p>
+          <p style={{display: "inline-block"}}>
+            <a href={"/key/" + elem}>{elem}</a>
+          </p>
           <button type="submit" className="btn btn-default"
             onClick={this.destroyHandler} data-access-key={elem}
             style={{marginLeft: "0.5em"}}>
