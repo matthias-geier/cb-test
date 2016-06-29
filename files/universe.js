@@ -184,6 +184,10 @@ var Universe = React.createClass({displayName: "Universe",
       }
     }.bind(this));
   },
+  backupHandler: function(e) {
+    e.preventDefault();
+    window.location.assign("/api/universe/" + this.props.id + "/backup");
+  },
   handleHref: function(title, url_partial) {
     return function(e) {
       e.preventDefault();
@@ -231,6 +235,18 @@ var Universe = React.createClass({displayName: "Universe",
       React.createElement(AccessKey, {uid: universe.id, opts: opts}, 
         React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
+        ), 
+        React.createElement("div", {style: {display: "inline-block"}}, 
+          React.createElement("a", {href: "#", onClick: this.backupHandler}, 
+            React.createElement("span", {style: {fontSize: "1.4em"}, 
+              className: "glyphicon glyphicon-download", "aria-hidden": "true"})
+          )
+        ), 
+        React.createElement("div", {style: {display: "inline-block"}}, 
+          React.createElement("a", {href: "#", onClick: this.backupHandler}, 
+            React.createElement("span", {style: {fontSize: "1.4em"}, 
+              className: "glyphicon glyphicon-upload", "aria-hidden": "true"})
+          )
         ), 
 
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",

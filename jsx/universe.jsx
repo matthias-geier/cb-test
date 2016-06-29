@@ -184,6 +184,10 @@ var Universe = React.createClass({
       }
     }.bind(this));
   },
+  backupHandler: function(e) {
+    e.preventDefault();
+    window.location.assign("/api/universe/" + this.props.id + "/backup");
+  },
   handleHref: function(title, url_partial) {
     return function(e) {
       e.preventDefault();
@@ -232,6 +236,18 @@ var Universe = React.createClass({
         <h2 style={{display: "inline-block"}}>
           <a href="#" onClick={this.handleHref(title, "")}>{title}</a>
         </h2>
+        <div style={{display: "inline-block"}}>
+          <a href="#" onClick={this.backupHandler}>
+            <span style={{fontSize: "1.4em"}}
+              className="glyphicon glyphicon-download" aria-hidden="true" />
+          </a>
+        </div>
+        <div style={{display: "inline-block"}}>
+          <a href="#" onClick={this.backupHandler}>
+            <span style={{fontSize: "1.4em"}}
+              className="glyphicon glyphicon-upload" aria-hidden="true" />
+          </a>
+        </div>
 
         <form className="form-inline" style={{display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}>

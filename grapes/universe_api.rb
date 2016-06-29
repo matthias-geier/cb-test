@@ -148,15 +148,19 @@ class UniverseApi < Grape::API
       end
 
       get "backup" do
-        {status: 200, body: Universe.backup(params[:uid])}
+        content_type "application/octet-stream"
+        header['Content-Disposition'] =
+          "attachment;filename=backup_#{params[:uid]}.json"
+        env['api.format'] = :binary
+        Universe.backup(params[:uid])
       end
 
       params do
-        requres :data, type: String, desc: "Universe dump"
+        requires :data, type: String, desc: "Universe dump"
       end
       post "restore" do
         Universe.restore(params[:uid], params[:data])
-        {status: 200, body: true)}
+        {status: 200, body: true}
       end
 
       namespace :character do
