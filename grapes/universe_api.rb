@@ -147,6 +147,18 @@ class UniverseApi < Grape::API
         validate_uid!
       end
 
+      get "backup" do
+        {status: 200, body: Universe.backup(params[:uid])}
+      end
+
+      params do
+        requres :data, type: String, desc: "Universe dump"
+      end
+      post "restore" do
+        Universe.restore(params[:uid], params[:data])
+        {status: 200, body: true)}
+      end
+
       namespace :character do
         get do
           {status: 200, body: Character.list(params[:uid])}

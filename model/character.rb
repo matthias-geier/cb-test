@@ -49,6 +49,16 @@ module Character
     return to_h(uid, cid)
   end
 
+  def backup(uid)
+    list(uid).map do |cid|
+      db_hash = to_h(uid, cid)
+      db_hash.delete("id")
+      db_hash.delete("uid")
+      db_hash.delete("updated_at")
+      next db_hash
+    end
+  end
+
   def delete(uid, cid)
     $redis.srem(uid, cid)
     $redis.del(character_key(uid, cid))

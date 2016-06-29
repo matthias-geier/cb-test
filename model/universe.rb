@@ -44,6 +44,31 @@ module Universe
     return to_h(id)
   end
 
+  def backup(id)
+    db_hash = $redis.hgetall(universe_key(id))
+    db_hash.delete("updated_at")
+    db_hash.delete("uid")
+    db_hash["characters"] = Character.backup(id)
+    db_hash["stories"] = Story.backup(id)
+    return db_hash
+  end
+
+  def restore(id, data)
+    Character.list(id).each { |sid| Character.delete(id, sid) }
+    (data.delete("characters") || []).each do |character|
+      Character.create(id, character)
+    end
+
+    Story.list(id).each { |story| Story.delete(id, story["id"]) }
+    (data.delete("stories") || []).each do |story|
+      poses = story.delete("poses")
+      created_story = Story.create(id, story)
+      poses.each { |pose| Story.pose(id, created_story["sid"], pose) }
+    end
+
+    update(id, data)
+  end
+
   def delete(id)
     return false unless exists?(id)
     Character.list(id).each { |sid| Character.delete(id, sid) }

@@ -58,6 +58,19 @@ module Story
     return to_h(uid, sid)
   end
 
+  def backup(uid)
+    list(uid).map do |story|
+      story["poses"] = $redis.
+        zrangebyscore(pose_key(uid, story["sid"]), 0, "+inf")
+      story.delete("id")
+      story.delete("sid")
+      story.delete("uid")
+      story.delete("updated_at")
+      story.delete("score")
+      next story
+    end
+  end
+
   def delete(uid, sid)
     $redis.del(story_key(uid, sid))
     $redis.del(pose_key(uid, sid))
