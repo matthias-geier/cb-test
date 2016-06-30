@@ -184,6 +184,25 @@ var Universe = React.createClass({displayName: "Universe",
       }
     }.bind(this));
   },
+  fileSelectedHandler: function(e) {
+    e.preventDefault();
+    var reader = new FileReader();
+    var file = this.refs.uploadbox.files[0];
+    reader.onloadend = function(e) {
+      promise.post("/api/universe/" + this.props.id + "/restore",
+        JSON.stringify({data: JSON.parse(e.target.result)}),
+        { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+        var payload = JSON.parse(text);
+        window.location.assign("/universe/" + this.props.id);
+      }.bind(this));
+    }.bind(this);
+    reader.readAsText(file);
+  },
+  selectFileHandler: function(e) {
+    e.preventDefault();
+    this.refs.uploadbox.click();
+  },
   backupHandler: function(e) {
     e.preventDefault();
     window.location.assign("/api/universe/" + this.props.id + "/backup");
@@ -236,17 +255,19 @@ var Universe = React.createClass({displayName: "Universe",
         React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
         ), 
-        React.createElement("div", {style: {display: "inline-block"}}, 
+        React.createElement("div", {style: {display: "inline-block", marginLeft: "0.6em"}}, 
           React.createElement("a", {href: "#", onClick: this.backupHandler}, 
-            React.createElement("span", {style: {fontSize: "1.4em"}, 
+            React.createElement("span", {style: {fontSize: "1.8em"}, 
               className: "glyphicon glyphicon-download", "aria-hidden": "true"})
           )
         ), 
-        React.createElement("div", {style: {display: "inline-block"}}, 
-          React.createElement("a", {href: "#", onClick: this.backupHandler}, 
-            React.createElement("span", {style: {fontSize: "1.4em"}, 
+        React.createElement("div", {style: {display: "inline-block", marginLeft: "0.6em"}}, 
+          React.createElement("a", {href: "#", onClick: this.selectFileHandler}, 
+            React.createElement("span", {style: {fontSize: "1.8em"}, 
               className: "glyphicon glyphicon-upload", "aria-hidden": "true"})
-          )
+          ), 
+          React.createElement("input", {type: "file", className: "hidden", ref: "uploadbox", 
+            onChange: this.fileSelectedHandler})
         ), 
 
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",

@@ -184,6 +184,25 @@ var Universe = React.createClass({
       }
     }.bind(this));
   },
+  fileSelectedHandler: function(e) {
+    e.preventDefault();
+    var reader = new FileReader();
+    var file = this.refs.uploadbox.files[0];
+    reader.onloadend = function(e) {
+      promise.post("/api/universe/" + this.props.id + "/restore",
+        JSON.stringify({data: JSON.parse(e.target.result)}),
+        { "Content-Type": "application/json" }).then(function(err, text, xhr) {
+
+        var payload = JSON.parse(text);
+        window.location.assign("/universe/" + this.props.id);
+      }.bind(this));
+    }.bind(this);
+    reader.readAsText(file);
+  },
+  selectFileHandler: function(e) {
+    e.preventDefault();
+    this.refs.uploadbox.click();
+  },
   backupHandler: function(e) {
     e.preventDefault();
     window.location.assign("/api/universe/" + this.props.id + "/backup");
@@ -236,17 +255,19 @@ var Universe = React.createClass({
         <h2 style={{display: "inline-block"}}>
           <a href="#" onClick={this.handleHref(title, "")}>{title}</a>
         </h2>
-        <div style={{display: "inline-block"}}>
+        <div style={{display: "inline-block", marginLeft: "0.6em"}}>
           <a href="#" onClick={this.backupHandler}>
-            <span style={{fontSize: "1.4em"}}
+            <span style={{fontSize: "1.8em"}}
               className="glyphicon glyphicon-download" aria-hidden="true" />
           </a>
         </div>
-        <div style={{display: "inline-block"}}>
-          <a href="#" onClick={this.backupHandler}>
-            <span style={{fontSize: "1.4em"}}
+        <div style={{display: "inline-block", marginLeft: "0.6em"}}>
+          <a href="#" onClick={this.selectFileHandler}>
+            <span style={{fontSize: "1.8em"}}
               className="glyphicon glyphicon-upload" aria-hidden="true" />
           </a>
+          <input type="file" className="hidden" ref="uploadbox"
+            onChange={this.fileSelectedHandler} />
         </div>
 
         <form className="form-inline" style={{display: "inline-block",
