@@ -38,6 +38,9 @@ module Story
 
   def create(uid, fields)
     sid = new_id
+    while exists?(uid, sid)
+      sid += 1
+    end
     story_count = $redis.zcard(list_key(uid))
     $redis.zadd(list_key(uid), story_count + 1, sid)
     $redis.hset(story_key(uid, sid), "sid", sid)
