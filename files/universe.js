@@ -2,8 +2,8 @@ var Universes = React.createClass({displayName: "Universes",
   getInitialState: function() {
     return { universes: [] };
   },
-  closeUniverseIf: function(universe) {
-    if (universe && this.state.universe !== universe) {
+  closeUniverseIf: function(uid) {
+    if (uid && this.state.uid !== uid) {
       return;
     }
     window.history.pushState({}, "/", "/");
@@ -23,13 +23,13 @@ var Universes = React.createClass({displayName: "Universes",
     var state = this.state;
     var match = this.props.opts.reqUrl().match("^\/universe\/([^\/]+)");
     if (match) {
-      if (match[1] !== state.universe) {
-        state.universe = match[1];
+      if (match[1] !== state.uid) {
+        state.uid = match[1];
         this.setState(state);
       }
     } else {
-      if ("universe" in state) {
-        delete(state.universe);
+      if ("uid" in state) {
+        delete(state.uid);
         this.setState(state);
       }
     }
@@ -41,11 +41,11 @@ var Universes = React.createClass({displayName: "Universes",
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        window.history.pushState({}, payload.body.id,
-          "/universe/" + payload.body.id);
+        window.history.pushState({}, payload.body.uid,
+          "/universe/" + payload.body.uid);
         this.update();
         var state = this.state;
-        state.universe = payload.body.id;
+        state.uid = payload.body.uid;
         this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -54,30 +54,30 @@ var Universes = React.createClass({displayName: "Universes",
   },
   hrefHandler: function(e) {
     e.preventDefault();
-    var universe = e.target.dataset.id;
-    var url = "/universe/" + universe;
+    var uid = e.target.dataset.uid;
+    var url = "/universe/" + uid;
     window.history.pushState({}, e.target.innerHTML, url);
     var state = this.state;
-    state.universe = universe;
+    state.uid = uid;
     this.setState(state);
   },
   hrefResetHandler: function(e) {
     e.preventDefault();
     window.history.pushState({}, "/", "/");
     var state = this.state;
-    delete(state.universe);
+    delete(state.uid);
     this.setState(state);
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var universe = e.currentTarget.dataset.universe;
-    var url = "/universe/" + universe;
+    var uid = e.currentTarget.dataset.uid;
+    var url = "/universe/" + uid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.closeUniverseIf(universe);
+        this.closeUniverseIf(uid);
         this.update();
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -111,21 +111,21 @@ var Universes = React.createClass({displayName: "Universes",
       ), 
       React.createElement("ul", {className: "col-xs-11 col-xs-offset-1 col-md-11 col-md-offset-1"}, 
       this.state.universes.map(function(elem) {
-        return React.createElement("li", {key: elem.id+elem.title}, 
-          React.createElement("a", {href: "/universe/" + elem.id, onClick: this.hrefHandler, 
-            "data-id": elem.id}, 
-            elem.title || elem.id
+        return React.createElement("li", {key: elem.uid+elem.title}, 
+          React.createElement("a", {href: "/universe/" + elem.uid, onClick: this.hrefHandler, 
+            "data-uid": elem.uid}, 
+            elem.title || elem.uid
           ), 
           React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
-            "data-universe": elem.id}, 
+            "data-uid": elem.uid}, 
             React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
           )
         );
       }.bind(this))
       ), 
-       this.state.universe ?
-        React.createElement(Universe, {opts: opts, id: this.state.universe, 
-          key: this.state.universe}) :
+       this.state.uid ?
+        React.createElement(Universe, {opts: opts, uid: this.state.uid, 
+          key: this.state.uid}) :
         ""
     );
   }
@@ -153,7 +153,7 @@ var Universe = React.createClass({displayName: "Universe",
     return match ? match[1] : "";
   },
   update: function() {
-    promise.get("/api/universe/" + this.props.id).
+    promise.get("/api/universe/" + this.props.uid).
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
@@ -167,7 +167,7 @@ var Universe = React.createClass({displayName: "Universe",
   },
   updateHandler: function(e) {
     e.preventDefault();
-    promise.put("/api/universe/" + this.props.id,
+    promise.put("/api/universe/" + this.props.uid,
       JSON.stringify({title: this.refs.title.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
@@ -189,12 +189,12 @@ var Universe = React.createClass({displayName: "Universe",
     var reader = new FileReader();
     var file = this.refs.uploadbox.files[0];
     reader.onloadend = function(e) {
-      promise.post("/api/universe/" + this.props.id + "/restore",
+      promise.post("/api/universe/" + this.props.uid + "/restore",
         JSON.stringify({data: JSON.parse(e.target.result)}),
         { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
         var payload = JSON.parse(text);
-        window.location.assign("/universe/" + this.props.id);
+        window.location.assign("/universe/" + this.props.uid);
       }.bind(this));
     }.bind(this);
     reader.readAsText(file);
@@ -205,13 +205,13 @@ var Universe = React.createClass({displayName: "Universe",
   },
   backupHandler: function(e) {
     e.preventDefault();
-    window.location.assign("/api/universe/" + this.props.id + "/backup");
+    window.location.assign("/api/universe/" + this.props.uid + "/backup");
   },
   handleHref: function(title, url_partial) {
     return function(e) {
       e.preventDefault();
       window.history.pushState({}, title,
-        "/universe/" + this.props.id + "/" + url_partial);
+        "/universe/" + this.props.uid + "/" + url_partial);
       this.forceUpdate();
     }.bind(this);
   },
@@ -227,7 +227,7 @@ var Universe = React.createClass({displayName: "Universe",
   },
   renderMenu: function() {
     var current = this.currentRoute();
-    var menu_items = [["character", "Characters"], ["story", "Stories"]];
+    var menu_items = [["prop", "Props"], ["story", "Stories"]];
     return React.createElement("ul", {className: "nav nav-tabs", key: current, 
       style: {marginTop: "2em"}}, 
       menu_items.map(function(elem) {
@@ -248,10 +248,10 @@ var Universe = React.createClass({displayName: "Universe",
     };
 
     var universe = this.state.universe;
-    var title = universe.title || universe.id;
+    var title = universe.title || universe.uid;
     var current = this.currentRoute();
     return React.createElement("div", {className: "col-xs-12 col-md-12", style: {backgroundColor: "#e5e5e5", minHeight: "50%", borderRadius: "5px"}}, 
-      React.createElement(AccessKey, {uid: universe.id, opts: opts}, 
+      React.createElement(AccessKey, {uid: universe.uid, opts: opts}, 
         React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
         ), 
@@ -282,14 +282,14 @@ var Universe = React.createClass({displayName: "Universe",
 
       this.renderMenu(), 
 
-      current === "character" ?
-        React.createElement(Characters, {uid: this.props.id, characters: universe.characters, 
-          opts: opts, key: "c" + universe.characters.
+      current === "prop" ?
+        React.createElement(Props, {uid: this.props.uid, props: universe.props, 
+          opts: opts, key: "c" + universe.props.
           map(function(elem) { return elem.updated_at; } ).join("")}) :
         "", 
 
       current === "story" ?
-        React.createElement(Stories, {uid: this.props.id, stories: universe.stories, 
+        React.createElement(Stories, {uid: this.props.uid, stories: universe.stories, 
           opts: opts, key: "s" + universe.stories.
           map(function(elem) { return elem.updated_at; } ).join("")}) :
         ""

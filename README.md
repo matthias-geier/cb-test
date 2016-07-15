@@ -4,11 +4,9 @@ Bugs:
 
 Features:
 
-Reorder Stories
-Reorder Poses
-Make Character show and edit prettier
-Pose preview
-Character links with markdown in Poses
+Add new props in sorted order to state
+Add landing page
+Add name rpuniverse.org
 
 Epics:
 

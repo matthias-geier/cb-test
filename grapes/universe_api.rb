@@ -16,9 +16,9 @@ module StoryHelpers
     error!({status: 404, body: "Story pose not found"}, 404)
   end
 
-  def validate_cid!
-    return if Character.exists?(params[:uid], params[:cid])
-    error!({status: 404, body: "Character not found in Universe"}, 404)
+  def validate_pid!
+    return if Prop.exists?(params[:uid], params[:pid])
+    error!({status: 404, body: "Prop not found in Universe"}, 404)
   end
 end
 
@@ -165,47 +165,47 @@ class UniverseApi < Grape::API
         {status: 200, body: true}
       end
 
-      namespace :character do
+      namespace :prop do
         get do
-          {status: 200, body: Character.list(params[:uid])}
+          {status: 200, body: Prop.list(params[:uid])}
         end
 
         params do
-          requires :cid, type: String, desc: "Character id"
+          requires :pid, type: String, desc: "Prop id"
         end
-        get ":cid" do
-          validate_cid!
-          {status: 200, body: Character.to_h(params[:uid], params[:cid])}
+        get ":pid" do
+          validate_pid!
+          {status: 200, body: Prop.to_h(params[:uid], params[:pid])}
         end
 
         params do
-          requires :cid, type: String, regexp: /\A[a-z_]+\z/,
-            desc: "Unique character id"
+          requires :pid, type: String, regexp: /\A[a-z_]+\z/,
+            desc: "Unique Prop id"
         end
         post do
-          if Character.exists?(params[:uid], params[:cid])
-            error!({status: 500, body: "Character id taken"}, 500)
+          if Prop.exists?(params[:uid], params[:pid])
+            error!({status: 500, body: "Prop id taken"}, 500)
           end
-          {status: 200, body: Character.create(params[:uid], params)}
+          {status: 200, body: Prop.create(params[:uid], params)}
         end
 
         params do
-          requires :cid, type: String, desc: "Character id"
+          requires :pid, type: String, desc: "Prop id"
         end
-        put ":cid" do
-          validate_cid!
+        put ":pid" do
+          validate_pid!
           {
             status: 200,
-            body: Character.update(params[:uid], params[:cid], params)
+            body: Prop.update(params[:uid], params[:pid], params)
           }
         end
 
         params do
-          requires :cid, type: String, desc: "Character id"
+          requires :pid, type: String, desc: "Prop id"
         end
-        delete ":cid" do
-          validate_cid!
-          {status: 200, body: Character.delete(params[:uid], params[:cid])}
+        delete ":pid" do
+          validate_pid!
+          {status: 200, body: Prop.delete(params[:uid], params[:pid])}
         end
       end
     end

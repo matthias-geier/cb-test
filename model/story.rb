@@ -39,7 +39,7 @@ module Story
   def create(uid, fields)
     sid = new_id
     while exists?(uid, sid)
-      sid += 1
+      sid = (sid.to_i + 1).to_s
     end
     story_count = $redis.zcard(list_key(uid))
     $redis.zadd(list_key(uid), story_count + 1, sid)
@@ -65,7 +65,6 @@ module Story
     list(uid).map do |story|
       story["poses"] = $redis.
         zrangebyscore(pose_key(uid, story["sid"]), 0, "+inf")
-      story.delete("id")
       story.delete("sid")
       story.delete("uid")
       story.delete("updated_at")
@@ -99,7 +98,6 @@ module Story
   def to_h(uid, sid, full = true)
     full_id = story_key(uid, sid)
     db_hash = $redis.hgetall(full_id)
-    db_hash["id"] = sid
     db_hash["updated_at"] = Time.at(db_hash["updated_at"].to_i).utc
     return db_hash unless full
 

@@ -7,13 +7,13 @@ var Stories = React.createClass({displayName: "Stories",
     var match = this.props.opts.reqUrl().
       match("^\/universe\/[^\/]+\/story\/([^\/]+)");
     if (match) {
-      if (match[1] !== state.story) {
-        state.story = match[1];
+      if (match[1] !== state.sid) {
+        state.sid = match[1];
         this.setState(state);
       }
     } else {
-      if ("story" in state) {
-        delete(state.story);
+      if ("sid" in state) {
+        delete(state.sid);
         this.setState(state);
       }
     }
@@ -31,8 +31,8 @@ var Stories = React.createClass({displayName: "Stories",
     }
     this.setState(state);
   },
-  closeStoryIf: function(story) {
-    if (story && this.state.story !== story) {
+  closeStoryIf: function(sid) {
+    if (sid && this.state.sid !== sid) {
       return;
     }
     window.history.pushState({}, this.props.uid,
@@ -41,16 +41,16 @@ var Stories = React.createClass({displayName: "Stories",
   },
   storyHrefHandler: function(e) {
     e.preventDefault();
-    var story = e.target.dataset.story;
+    var sid = e.target.dataset.sid;
     var url = "/universe/" + this.props.uid + "/story";
     var state = this.state;
-    if (story) {
-      url += "/" + story;
+    if (sid) {
+      url += "/" + sid;
       window.history.pushState({}, e.target.innerHTML, url);
-      state.story = story;
+      state.sid = sid;
     } else {
       window.history.pushState({}, "", url);
-      delete(state.story);
+      delete(state.sid);
     }
     this.setState(state);
   },
@@ -64,7 +64,7 @@ var Stories = React.createClass({displayName: "Stories",
       var payload = JSON.parse(text);
       if (payload.status === 200) {
         window.history.pushState({}, payload.body.title,
-          url + "/" + payload.body.id);
+          url + "/" + payload.body.sid);
         var state = this.state;
         state.stories.push(payload.body);
         this.setState(state);
@@ -77,17 +77,17 @@ var Stories = React.createClass({displayName: "Stories",
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var story = e.currentTarget.dataset.story;
-    var url = "/universe/" + this.props.uid + "/story/" + story;
+    var sid = e.currentTarget.dataset.sid;
+    var url = "/universe/" + this.props.uid + "/story/" + sid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.closeStoryIf(story);
+        this.closeStoryIf(sid);
         var state = this.state;
         var i = 0;
-        for(; state.stories[i].id != story; i++);
+        for(; state.stories[i].sid != sid; i++);
         state.stories.splice(i, 1);
         this.setState(state);
       } else {
@@ -121,10 +121,10 @@ var Stories = React.createClass({displayName: "Stories",
   componentDidMount: function() {
     this.updateStory();
   },
-  renderStoryList: function() {
+  renderStoryList: function(storyTag) {
     return this.state.stories.map(function(elem, i) {
       return React.createElement("li", {key: elem+i}, 
-        React.createElement("a", {href: "#", "data-story": elem.id, 
+        React.createElement("a", {href: "#", "data-sid": elem.sid, 
           onClick: this.storyHrefHandler}, elem.title), 
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
           onClick: this.storySwapHandler, "data-num": i}, 
@@ -137,9 +137,10 @@ var Stories = React.createClass({displayName: "Stories",
             "aria-hidden": "true"})
         ), 
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
-          "data-story": elem.id}, 
+          "data-sid": elem.sid}, 
           React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
-        )
+        ), 
+        storyTag && this.state.sid == elem.sid ? storyTag : ""
       );
     }.bind(this));
   },
@@ -158,6 +159,10 @@ var Stories = React.createClass({displayName: "Stories",
       updateUniverse: this.props.opts.updateUniverse,
       updateStory: this.updateStory
     };
+    var storyTag = this.state.sid ?
+      React.createElement(Story, {opts: opts, uid: this.props.uid, sid: this.state.sid, 
+        key: this.state.story}) :
+      undefined;
     return React.createElement("div", {style: {border: "1px solid #ddd", borderTop: 0,
       backgroundColor: "white"}, className: "col-xs-12 col-md-12"}, 
       React.createElement("h3", {style: {display: "inline-block"}}, 
@@ -170,13 +175,9 @@ var Stories = React.createClass({displayName: "Stories",
           React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
         )
       ), 
-       this.state.create_new ? this.renderNew() : React.createElement("div", null), 
+      this.state.create_new ? this.renderNew() : React.createElement("div", null), 
 
-      React.createElement("ul", {className: "list-unstyled"}, this.renderStoryList()), 
-       this.state.story ?
-        React.createElement(Story, {opts: opts, uid: this.props.uid, id: this.state.story, 
-          key: this.state.story}) :
-        ""
+      React.createElement("ul", {className: "list-unstyled"}, this.renderStoryList(storyTag))
     );
   }
 });
@@ -186,7 +187,7 @@ var Story = React.createClass({displayName: "Story",
     return {};
   },
   storyUrl: function() {
-    return "/universe/" + this.props.uid + "/story/" + this.props.id;
+    return "/universe/" + this.props.uid + "/story/" + this.props.sid;
   },
   poseValue: function() {
     var state = this.state;
@@ -223,7 +224,7 @@ var Story = React.createClass({displayName: "Story",
   },
   updateHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.sid;
     promise.put("/api" + url,
       JSON.stringify({title: this.refs.title.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -242,7 +243,7 @@ var Story = React.createClass({displayName: "Story",
   },
   poseHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.sid;
     promise.post("/api" + url + "/pose",
       JSON.stringify({pose: this.refs.pose.value}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -280,7 +281,7 @@ var Story = React.createClass({displayName: "Story",
   },
   unposeHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.sid;
     promise.del("/api" + url + "/pose",
       JSON.stringify({num: e.currentTarget.dataset.num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -297,7 +298,7 @@ var Story = React.createClass({displayName: "Story",
   },
   poseSwapHandler: function(e) {
     e.preventDefault();
-    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.id;
+    var url = "/universe/" + this.props.uid + "/story/" + this.state.story.sid;
     promise.put("/api" + url + "/pose/swap",
       JSON.stringify({num: e.currentTarget.dataset.num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {

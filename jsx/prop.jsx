@@ -1,19 +1,19 @@
-var Characters = React.createClass({
+var Props = React.createClass({
   getInitialState: function() {
     return {};
   },
-  updateCharacter: function() {
+  updateProp: function() {
     var state = this.state;
     var match = this.props.opts.reqUrl().
-      match("^\/universe\/[^\/]+\/character\/([^\/]+)");
+      match("^\/universe\/[^\/]+\/prop\/([^\/]+)");
     if (match) {
-      if (match[1] !== state.character) {
-        state.character = match[1];
+      if (match[1] !== state.pid) {
+        state.pid = match[1];
         this.setState(state);
       }
     } else {
-      if ("character" in state) {
-        delete(state.character);
+      if ("pid" in state) {
+        delete(state.pid);
         this.setState(state);
       }
     }
@@ -31,43 +31,43 @@ var Characters = React.createClass({
     }
     this.setState(state);
   },
-  closeCharacterIf: function(character) {
-    if (character && this.state.character !== character) {
+  closePropIf: function(pid) {
+    if (pid && this.state.pid !== pid) {
       return;
     }
     window.history.pushState({}, this.props.uid,
       "/universe/" + this.props.uid);
-    this.updateCharacter();
+    this.updateProp();
   },
-  charHrefHandler: function(e) {
+  propHrefHandler: function(e) {
     e.preventDefault();
-    var char = e.target.dataset.character;
-    var url = "/universe/" + this.props.uid + "/character";
+    var pid = e.target.dataset.pid;
+    var url = "/universe/" + this.props.uid + "/prop";
     var state = this.state;
-    if (char) {
-      url += "/" + char;
-      state.character = char;
+    if (pid) {
+      url += "/" + pid;
+      state.pid = pid;
     } else {
-      delete(state.character);
+      delete(state.pid);
     }
-    window.history.pushState({}, char, url);
+    window.history.pushState({}, pid, url);
     this.setState(state);
   },
   createNewHandler: function(e) {
     e.preventDefault();
-    var char = this.refs.id.value;
-    var url = "/universe/" + this.props.uid + "/character";
-    promise.post("/api" + url, JSON.stringify({cid: char}),
+    var pid = this.refs.pid.value;
+    var url = "/universe/" + this.props.uid + "/prop";
+    promise.post("/api" + url, JSON.stringify({pid: pid}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        window.history.pushState({}, char, url + "/" + char);
+        window.history.pushState({}, pid, url + "/" + pid);
         var state = this.state;
-        state.characters.push(char);
+        state.props.push(pid);
         this.setState(state);
         this.toggleNew();
-        this.updateCharacter();
+        this.updateProp();
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -75,16 +75,16 @@ var Characters = React.createClass({
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var char = e.currentTarget.dataset.character;
-    var url = "/universe/" + this.props.uid + "/character/" + char;
+    var pid = e.currentTarget.dataset.pid;
+    var url = "/universe/" + this.props.uid + "/prop/" + pid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
-        this.closeCharacterIf(char);
+        this.closePropIf(pid);
         var state = this.state;
-        state.characters.splice(state.characters.indexOf(char), 1);
+        state.props.splice(state.props.indexOf(pid), 1);
         this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -93,27 +93,28 @@ var Characters = React.createClass({
   },
   componentWillMount: function() {
     var state = this.state;
-    state.characters = this.props.characters;
+    state.props = this.props.props;
     this.setState(state);
   },
   componentDidMount: function() {
-    this.updateCharacter();
+    this.updateProp();
   },
-  renderCharList: function() {
-    return this.state.characters.map(function(elem, i) {
+  renderPropList: function(propTag) {
+    return this.state.props.map(function(elem, i) {
       return <li key={elem+i}>
-        <a href="#" data-character={elem}
-          onClick={this.charHrefHandler}>{elem}</a>
+        <a href="#" data-pid={elem}
+          onClick={this.propHrefHandler}>{elem}</a>
         <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
-          data-character={elem}>
+          data-pid={elem}>
           <span className="glyphicon glyphicon-trash" aria-hidden="true" />
         </a>
+        {propTag && elem == this.state.pid ? propTag : ""}
       </li>;
     }.bind(this));
   },
   renderNew: function() {
     return <form className="form-inline" onSubmit={this.createNewHandler}>
-      <input className="form-control" ref="id"
+      <input className="form-control" ref="pid"
         placeholder="id (only a-z and _)" />
       <input type="submit" className="btn btn-default" value="Create" />
     </form>;
@@ -123,12 +124,16 @@ var Characters = React.createClass({
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateCharacter: this.updateCharacter
+      updateProp: this.updateProp
     };
+    var propTag = this.state.pid ?
+      <Prop opts={opts} uid={this.props.uid} pid={this.state.pid}
+        key={this.state.pid} /> :
+      undefined;
     return <div style={{border: "1px solid #ddd", borderTop: 0,
       backgroundColor: "white"}} className="col-xs-12 col-md-12">
       <h3 style={{display: "inline-block"}}>
-        <a href="#" onClick={this.charHrefHandler}>Characters</a>
+        <a href="#" onClick={this.propHrefHandler}>Props</a>
       </h3>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
@@ -137,31 +142,27 @@ var Characters = React.createClass({
           <span className="glyphicon glyphicon-plus" aria-hidden="true" />
         </button>
       </form>
-      { this.state.create_new ? this.renderNew() : <div /> }
+      {this.state.create_new ? this.renderNew() : <div />}
 
-      <ul className="list-unstyled">{this.renderCharList()}</ul>
-      { this.state.character ?
-        <Character opts={opts} uid={this.props.uid} id={this.state.character}
-          key={this.state.character} /> :
-        "" }
+      <ul className="list-unstyled">{this.renderPropList(propTag)}</ul>
     </div>;
   }
 });
 
-var Character = React.createClass({
+var Prop = React.createClass({
   getInitialState: function() {
     return {};
   },
-  charUrl: function() {
-    return "/universe/" + this.props.uid + "/character/" + this.props.id;
+  propUrl: function() {
+    return "/universe/" + this.props.uid + "/prop/" + this.props.pid;
   },
   update: function() {
-    promise.get("/api" + this.charUrl()).
+    promise.get("/api" + this.propUrl()).
       then(function(err, text, xhr) {
       var payload = JSON.parse(text);
       if (payload.status === 200) {
         var state = this.state;
-        state.character = payload.body;
+        state.prop = payload.body;
         this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -188,14 +189,14 @@ var Character = React.createClass({
       if (!this.refs["key"+i]) { break; }
       data[this.refs["key"+i].value] = this.refs["value"+i].value;
     }
-    promise.put("/api" + this.charUrl(), JSON.stringify(data),
+    promise.put("/api" + this.propUrl(), JSON.stringify(data),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
       if (payload.status === 200) {
         this.toggleEdit();
         var state = this.state;
-        state.character = payload.body;
+        state.prop = payload.body;
         this.setState(state);
         this.filterUnused(Object.keys(payload.body));
       } else {
@@ -205,7 +206,7 @@ var Character = React.createClass({
   },
   addFieldHandler: function(e) {
     e.preventDefault();
-    var state = this.state.character;
+    var state = this.state.prop;
     for(var i = 1; ; i++) {
       if (Object.keys(state).indexOf("new field " + i) > -1) { continue; }
       state["new field " + i] = "";
@@ -221,12 +222,12 @@ var Character = React.createClass({
       return fieldset.indexOf(elem) === -1;
     });
     var state = this.state;
-    unused.forEach(function(elem) { delete(state.character[elem]) });
+    unused.forEach(function(elem) { delete(state.prop[elem]) });
     this.setState(state);
   },
   editableFields: function() {
-    var blocked = ["id", "cid", "uid", "updated_at", "editable"];
-    return Object.keys(this.state.character).filter(function(val) {
+    var blocked = ["pid", "uid", "updated_at", "editable"];
+    return Object.keys(this.state.prop).filter(function(val) {
       return blocked.indexOf(val) === -1;
     });
   },
@@ -245,7 +246,7 @@ var Character = React.createClass({
           return <div className="col-xs-6 col-md-6" key={key}>
             <blockquote className={i%2 === 1 ? "blockquote-reverse" : ""}>
               <p style={{whiteSpace: "pre-line"}} dangerouslySetInnerHTML={
-                this.renderText(this.state.character[key])} />
+                this.renderText(this.state.prop[key])} />
               <footer style={{fontVariant: "small-caps"}}>{key}</footer>
             </blockquote>
           </div>;
@@ -268,11 +269,11 @@ var Character = React.createClass({
       <table className="table table-hover"><tbody>{
         this.editableFields().map(function(key, i) {
           return <tr key={key}>
-            <td style={{width: "25%"}}><input className="form-control" ref={"key"+i}
-              defaultValue={key} /></td>
+            <td style={{width: "25%"}}><input className="form-control"
+              ref={"key"+i} defaultValue={key} /></td>
             <td><textarea className="form-control"
               ref={"value"+i} rows="3" style={{width: "70%"}}
-              defaultValue={this.state.character[key]} /></td>
+              defaultValue={this.state.prop[key]} /></td>
           </tr>;
         }.bind(this))
       }</tbody></table>
@@ -284,11 +285,13 @@ var Character = React.createClass({
     </form>;
   },
   render: function() {
-    if (!this.state.character) { return <div />; }
+    if (!this.state.prop) { return <div />; }
 
-    var char = this.state.character;
+    var prop = this.state.prop;
     return <div className="col-xs-12 col-md-12">
-      <h3 style={{display: "inline-block", textTransform: "uppercase"}}>{char.cid}</h3>
+      <h3 style={{display: "inline-block", textTransform: "uppercase"}}>
+        {prop.pid}
+      </h3>
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
