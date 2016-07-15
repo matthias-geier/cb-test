@@ -99,7 +99,10 @@ var Universes = React.createClass({displayName: "Universes",
     return React.createElement("div", {className: "row"}, 
       React.createElement(Session, {opts: opts}, 
         React.createElement("h1", {style: {display: "inline-block"}}, 
-          React.createElement("a", {href: "#", onClick: this.hrefResetHandler}, "Universes")
+          React.createElement("a", {href: "#", onClick: this.hrefResetHandler}, 
+            React.createElement("span", {style: {textTransform: "uppercase"}}, "rpuniverse"), 
+            React.createElement("span", {style: {fontVariant: "small-caps"}}, ".org")
+          )
         ), 
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}, 
@@ -126,7 +129,7 @@ var Universes = React.createClass({displayName: "Universes",
        this.state.uid ?
         React.createElement(Universe, {opts: opts, uid: this.state.uid, 
           key: this.state.uid}) :
-        ""
+        React.createElement(Landing, null)
     );
   }
 });

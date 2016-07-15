@@ -99,7 +99,10 @@ var Universes = React.createClass({
     return <div className="row">
       <Session opts={opts}>
         <h1 style={{display: "inline-block"}}>
-          <a href="#" onClick={this.hrefResetHandler}>Universes</a>
+          <a href="#" onClick={this.hrefResetHandler}>
+            <span style={{textTransform: "uppercase"}}>rpuniverse</span>
+            <span style={{fontVariant: "small-caps"}}>.org</span>
+          </a>
         </h1>
         <form className="form-inline" style={{display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}>
@@ -126,7 +129,7 @@ var Universes = React.createClass({
       { this.state.uid ?
         <Universe opts={opts} uid={this.state.uid}
           key={this.state.uid} /> :
-        "" }
+        <Landing /> }
     </div>;
   }
 });

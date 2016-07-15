@@ -65,6 +65,7 @@ var Props = React.createClass({displayName: "Props",
         window.history.pushState({}, pid, url + "/" + pid);
         var state = this.state;
         state.props.push(pid);
+        state.props.sort();
         this.setState(state);
         this.toggleNew();
         this.updateProp();
