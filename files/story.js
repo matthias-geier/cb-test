@@ -359,7 +359,7 @@ var Story = React.createClass({displayName: "Story",
       replace(/'/g, "&#039;").
       replace(/\//g, "&#x2F;").
       replace(/\[([^|]+)\|([^\]]+)\]/g, "<a href=\"/universe/" +
-        this.props.uid + "/character/$1\" " + "target=\"window\">$2</a>");
+        this.props.uid + "/prop/$1\" " + "target=\"window\">$2</a>");
     return {__html: pose };
   },
   render: function() {
