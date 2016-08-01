@@ -6,7 +6,9 @@ Features:
 
 Add new props in sorted order to state
 Add landing page
-Add name rpuniverse.org
+Increase headline size
+Limit size of prop names
+Add confirmation for deleting stuff
 
 Epics:
 
