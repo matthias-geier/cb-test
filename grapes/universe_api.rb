@@ -184,7 +184,11 @@ class UniverseApi < Grape::API
         end
         post do
           if Prop.exists?(params[:uid], params[:pid])
-            error!({status: 500, body: "Prop id taken"}, 500)
+            error!({status: 400, body: "Prop id taken"}, 400)
+          end
+
+          if params[:pid].size >= 25
+            error!({status: 400, body: "Prop id must be shorter than 25"}, 400)
           end
           {status: 200, body: Prop.create(params[:uid], params)}
         end

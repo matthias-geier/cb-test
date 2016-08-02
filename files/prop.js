@@ -115,7 +115,7 @@ var Props = React.createClass({displayName: "Props",
   },
   renderNew: function() {
     return React.createElement("form", {className: "form-inline", onSubmit: this.createNewHandler}, 
-      React.createElement("input", {className: "form-control", ref: "pid", 
+      React.createElement("input", {className: "form-control", ref: "pid", maxlength: "24", 
         placeholder: "id (only a-z and _)"}), 
       React.createElement("input", {type: "submit", className: "btn btn-default", value: "Create"})
     );

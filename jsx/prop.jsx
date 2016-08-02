@@ -115,7 +115,7 @@ var Props = React.createClass({
   },
   renderNew: function() {
     return <form className="form-inline" onSubmit={this.createNewHandler}>
-      <input className="form-control" ref="pid"
+      <input className="form-control" ref="pid" maxlength="24"
         placeholder="id (only a-z and _)" />
       <input type="submit" className="btn btn-default" value="Create" />
     </form>;
