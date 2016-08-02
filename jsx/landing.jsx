@@ -115,6 +115,21 @@ var Landing = React.createClass({
             a role each access key, but right now everyone is the
             superadmin. Make backups often if you do not trust your players!</p>
           </div>
+
+          <div className="panel-heading" onClick={this.collapse}>
+            <h4><a href="#collapse">What if someone deletes my
+              universe?</a></h4>
+          </div>
+          <div className="panel-body" style={{display: "none"}}>
+            <p>This is on the to-do list. Right now the old saying from
+            the BOFH applies - you better have a backup.</p>
+
+            <p>You can backup <span className="glyphicon glyphicon-download"
+            aria-hidden="true" /> and <span
+            className="glyphicon glyphicon-upload" aria-hidden="true" />
+            restore your universe with a simple button click. Just remember,
+            it will wipe the universe you apply the backup to.</p>
+          </div>
         </div></div>
       </div>
     </div>;

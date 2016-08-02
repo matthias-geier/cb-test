@@ -114,6 +114,21 @@ var Landing = React.createClass({displayName: "Landing",
             React.createElement("p", null, "Right, the admin and no admin setup. It is planned to add" + ' ' +
             "a role each access key, but right now everyone is the" + ' ' +
             "superadmin. Make backups often if you do not trust your players!")
+          ), 
+
+          React.createElement("div", {className: "panel-heading", onClick: this.collapse}, 
+            React.createElement("h4", null, React.createElement("a", {href: "#collapse"}, "What if someone deletes my" + ' ' +
+              "universe?"))
+          ), 
+          React.createElement("div", {className: "panel-body", style: {display: "none"}}, 
+            React.createElement("p", null, "This is on the to-do list. Right now the old saying from" + ' ' +
+            "the BOFH applies - you better have a backup."), 
+
+            React.createElement("p", null, "You can backup ", React.createElement("span", {className: "glyphicon glyphicon-download", 
+            "aria-hidden": "true"}), " and ", React.createElement("span", {
+            className: "glyphicon glyphicon-upload", "aria-hidden": "true"}), 
+            "restore your universe with a simple button click. Just remember," + ' ' +
+            "it will wipe the universe you apply the backup to.")
           )
         ))
       )
