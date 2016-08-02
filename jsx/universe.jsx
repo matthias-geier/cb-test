@@ -70,7 +70,18 @@ var Universes = React.createClass({
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var uid = e.currentTarget.dataset.uid;
+    this.toggleDestroy(e.currentTarget.dataset.uid);
+  },
+  toggleDestroy: function(uid) {
+    var state = this.state;
+    if (state.destroy && !uid) {
+      delete(state.destroy);
+    } else {
+      state.destroy = uid;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(uid) {
     var url = "/universe/" + uid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -98,7 +109,7 @@ var Universes = React.createClass({
     };
     return <div className="row">
       <Session opts={opts}>
-        <h1 style={{display: "inline-block"}}>
+        <h1 style={{display: "inline-block", lineHeight: 1.5, fontSize: "4em"}}>
           <a href="#" onClick={this.hrefResetHandler}>
             <span style={{textTransform: "uppercase"}}>rpuniverse</span>
             <span style={{fontVariant: "small-caps"}}>.org</span>
@@ -114,15 +125,19 @@ var Universes = React.createClass({
       </Session>
       <ul className="col-xs-11 col-xs-offset-1 col-md-11 col-md-offset-1">
       {this.state.universes.map(function(elem) {
+        var trash =
+          <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
+            data-uid={elem.uid}>
+            <span className="glyphicon glyphicon-trash" aria-hidden="true" />
+          </a>;
         return <li key={elem.uid+elem.title}>
           <a href={"/universe/" + elem.uid} onClick={this.hrefHandler}
             data-uid={elem.uid}>
             {elem.title || elem.uid}
           </a>
-          <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
-            data-uid={elem.uid}>
-            <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-          </a>
+          {this.state.destroy === elem.uid ?
+            <ConfirmBox payload={elem.uid} callback={this.destroyCallback}
+            close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
         </li>;
       }.bind(this))}
       </ul>

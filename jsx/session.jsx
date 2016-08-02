@@ -58,7 +58,7 @@ var Session = React.createClass({
     return <div className="col-xs-12 col-md-12">
       <div style={{display: "inline-block"}}>
         <a href="#" onClick={this.toggleEditHandler}>
-          <span style={{fontSize: "1.4em"}}
+          <span style={{fontSize: "2em"}}
             className="glyphicon glyphicon-user" aria-hidden="true" />
         </a>
       </div> <div style={{display: "inline-block", marginLeft: "0.5em"}}>

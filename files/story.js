@@ -77,7 +77,18 @@ var Stories = React.createClass({displayName: "Stories",
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var sid = e.currentTarget.dataset.sid;
+    this.toggleDestroy(e.currentTarget.dataset.sid);
+  },
+  toggleDestroy: function(sid) {
+    var state = this.state;
+    if (state.destroy && !sid) {
+      delete(state.destroy);
+    } else {
+      state.destroy = sid;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(sid) {
     var url = "/universe/" + this.props.uid + "/story/" + sid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -123,6 +134,11 @@ var Stories = React.createClass({displayName: "Stories",
   },
   renderStoryList: function(storyTag) {
     return this.state.stories.map(function(elem, i) {
+      var trash =
+        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
+          "data-sid": elem.sid}, 
+          React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+        );
       return React.createElement("li", {key: elem+i}, 
         React.createElement("a", {href: "#", "data-sid": elem.sid, 
           onClick: this.storyHrefHandler}, elem.title), 
@@ -136,10 +152,9 @@ var Stories = React.createClass({displayName: "Stories",
           React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
             "aria-hidden": "true"})
         ), 
-        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
-          "data-sid": elem.sid}, 
-          React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
-        ), 
+        this.state.destroy == elem.sid ?
+          React.createElement(ConfirmBox, {payload: elem.sid, callback: this.destroyCallback, 
+          close: this.toggleDestroy}, trash) : trash, 
         storyTag && this.state.sid == elem.sid ? storyTag : ""
       );
     }.bind(this));
@@ -279,11 +294,23 @@ var Story = React.createClass({displayName: "Story",
     }
     this.setState(state);
   },
-  unposeHandler: function(e) {
+  toggleUnposeHandler: function(e) {
     e.preventDefault();
+    this.toggleUnpose(e.currentTarget.dataset.num);
+  },
+  toggleUnpose: function(num) {
+    var state = this.state;
+    if (state.unpose && !num) {
+      delete(state.unpose);
+    } else {
+      state.unpose = num;
+    }
+    this.setState(state);
+  },
+  unposeCallback: function(num) {
     var url = "/universe/" + this.props.uid + "/story/" + this.state.story.sid;
     promise.del("/api" + url + "/pose",
-      JSON.stringify({num: e.currentTarget.dataset.num}),
+      JSON.stringify({num: num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
@@ -325,6 +352,11 @@ var Story = React.createClass({displayName: "Story",
   },
   renderPlain: function() {
     return this.state.story.poses.map(function(pose) {
+      var trash =
+        React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+          onClick: this.toggleUnposeHandler, "data-num": pose[0]}, 
+          React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+        );
       return React.createElement("div", {className: "col-md-12", key: pose[0]}, 
         React.createElement("blockquote", null, 
           React.createElement("p", {style: {whiteSpace: "pre-line"}, 
@@ -341,10 +373,9 @@ var Story = React.createClass({displayName: "Story",
               React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
                 "aria-hidden": "true"})
             ), 
-            React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.unposeHandler, 
-              "data-num": pose[0]}, 
-              React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
-            )
+            this.state.unpose == pose[0] ?
+              React.createElement(ConfirmBox, {payload: pose[0], callback: this.unposeCallback, 
+              close: this.toggleUnpose}, trash) : trash
           )
         )
       );

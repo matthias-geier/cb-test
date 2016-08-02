@@ -76,7 +76,18 @@ var Props = React.createClass({displayName: "Props",
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var pid = e.currentTarget.dataset.pid;
+    this.toggleDestroy(e.currentTarget.dataset.pid);
+  },
+  toggleDestroy: function(pid) {
+    var state = this.state;
+    if (state.destroy && !pid) {
+      delete(state.destroy);
+    } else {
+      state.destroy = pid;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(pid) {
     var url = "/universe/" + this.props.uid + "/prop/" + pid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -102,13 +113,17 @@ var Props = React.createClass({displayName: "Props",
   },
   renderPropList: function(propTag) {
     return this.state.props.map(function(elem, i) {
-      return React.createElement("li", {key: elem+i}, 
-        React.createElement("a", {href: "#", "data-pid": elem, 
-          onClick: this.propHrefHandler}, elem), 
+      var trash =
         React.createElement("a", {href: "#", style: {marginLeft: "2em"}, onClick: this.destroyHandler, 
           "data-pid": elem}, 
           React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
-        ), 
+        );
+      return React.createElement("li", {key: elem+i}, 
+        React.createElement("a", {href: "#", "data-pid": elem, 
+          onClick: this.propHrefHandler}, elem), 
+        this.state.destroy == elem ?
+          React.createElement(ConfirmBox, {payload: elem, callback: this.destroyCallback, 
+          close: this.toggleDestroy}, trash) : trash, 
         propTag && elem == this.state.pid ? propTag : ""
       );
     }.bind(this));

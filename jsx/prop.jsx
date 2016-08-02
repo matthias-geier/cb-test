@@ -76,7 +76,18 @@ var Props = React.createClass({
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var pid = e.currentTarget.dataset.pid;
+    this.toggleDestroy(e.currentTarget.dataset.pid);
+  },
+  toggleDestroy: function(pid) {
+    var state = this.state;
+    if (state.destroy && !pid) {
+      delete(state.destroy);
+    } else {
+      state.destroy = pid;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(pid) {
     var url = "/universe/" + this.props.uid + "/prop/" + pid;
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -102,13 +113,17 @@ var Props = React.createClass({
   },
   renderPropList: function(propTag) {
     return this.state.props.map(function(elem, i) {
-      return <li key={elem+i}>
-        <a href="#" data-pid={elem}
-          onClick={this.propHrefHandler}>{elem}</a>
+      var trash =
         <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
           data-pid={elem}>
           <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-        </a>
+        </a>;
+      return <li key={elem+i}>
+        <a href="#" data-pid={elem}
+          onClick={this.propHrefHandler}>{elem}</a>
+        {this.state.destroy === elem ?
+          <ConfirmBox payload={elem} callback={this.destroyCallback}
+          close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
         {propTag && elem == this.state.pid ? propTag : ""}
       </li>;
     }.bind(this));
