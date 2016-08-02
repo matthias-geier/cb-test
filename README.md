@@ -4,7 +4,7 @@ Bugs:
 
 Features:
 
-Add landing page
+Fix titles -> right now none are there
 Increase headline size
 Add confirmation for deleting stuff
 

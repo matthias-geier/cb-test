@@ -126,8 +126,8 @@ var Landing = React.createClass({displayName: "Landing",
 
             React.createElement("p", null, "You can backup ", React.createElement("span", {className: "glyphicon glyphicon-download", 
             "aria-hidden": "true"}), " and ", React.createElement("span", {
-            className: "glyphicon glyphicon-upload", "aria-hidden": "true"}), 
-            "restore your universe with a simple button click. Just remember," + ' ' +
+            className: "glyphicon glyphicon-upload", "aria-hidden": "true"}), " restore" + ' ' +
+            "your universe with a simple button click. Just remember," + ' ' +
             "it will wipe the universe you apply the backup to.")
           )
         ))
