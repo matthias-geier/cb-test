@@ -5,8 +5,7 @@ Bugs:
 Features:
 
 Fix titles -> right now none are there
-Increase headline size
-Add confirmation for deleting stuff
+Add confirmation for deleting access key
 
 Epics:
 
