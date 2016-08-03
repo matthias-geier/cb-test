@@ -152,7 +152,7 @@ var Stories = React.createClass({displayName: "Stories",
           React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
             "aria-hidden": "true"})
         ), 
-        this.state.destroy == elem.sid ?
+        this.state.destroy === elem.sid ?
           React.createElement(ConfirmBox, {payload: elem.sid, callback: this.destroyCallback, 
           close: this.toggleDestroy}, trash) : trash, 
         storyTag && this.state.sid == elem.sid ? storyTag : ""
@@ -373,7 +373,7 @@ var Story = React.createClass({displayName: "Story",
               React.createElement("span", {className: "glyphicon glyphicon-chevron-down", 
                 "aria-hidden": "true"})
             ), 
-            this.state.unpose == pose[0] ?
+            this.state.unpose === pose[0].toString() ?
               React.createElement(ConfirmBox, {payload: pose[0], callback: this.unposeCallback, 
               close: this.toggleUnpose}, trash) : trash
           )

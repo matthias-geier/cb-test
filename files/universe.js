@@ -135,7 +135,7 @@ var Universes = React.createClass({displayName: "Universes",
             "data-uid": elem.uid}, 
             elem.title || elem.uid
           ), 
-          this.state.destroy == elem.uid ?
+          this.state.destroy === elem.uid ?
             React.createElement(ConfirmBox, {payload: elem.uid, callback: this.destroyCallback, 
             close: this.toggleDestroy}, trash) : trash
         );

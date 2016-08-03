@@ -121,7 +121,7 @@ var Props = React.createClass({displayName: "Props",
       return React.createElement("li", {key: elem+i}, 
         React.createElement("a", {href: "#", "data-pid": elem, 
           onClick: this.propHrefHandler}, elem), 
-        this.state.destroy == elem ?
+        this.state.destroy === elem ?
           React.createElement(ConfirmBox, {payload: elem, callback: this.destroyCallback, 
           close: this.toggleDestroy}, trash) : trash, 
         propTag && elem == this.state.pid ? propTag : ""

@@ -108,6 +108,9 @@ module Story
   end
 
   def pose(uid, sid, pose)
+    while $redis.zscore(pose_key(uid, sid), pose)
+      pose += " "
+    end
     pose_count = $redis.zcard(pose_key(uid, sid))
     $redis.zadd(pose_key(uid, sid), pose_count + 1, pose)
     touch(story_key(uid, sid))

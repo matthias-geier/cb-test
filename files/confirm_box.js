@@ -1,8 +1,11 @@
 var ConfirmBox = React.createClass({displayName: "ConfirmBox",
   confirmHandler: function(e) {
+    e.preventDefault();
     this.props.callback(this.props.payload);
+    this.props.close();
   },
   closeHandler: function(e) {
+    e.preventDefault();
     this.props.close();
   },
   render: function() {

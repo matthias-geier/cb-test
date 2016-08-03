@@ -373,7 +373,7 @@ var Story = React.createClass({
               <span className="glyphicon glyphicon-chevron-down"
                 aria-hidden="true" />
             </a>
-            {this.state.unpose === pose[0] ?
+            {this.state.unpose === pose[0].toString() ?
               <ConfirmBox payload={pose[0]} callback={this.unposeCallback}
               close={this.toggleUnpose}>{trash}</ConfirmBox> : trash}
           </footer>
