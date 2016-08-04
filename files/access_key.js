@@ -44,7 +44,18 @@ var AccessKey = React.createClass({displayName: "AccessKey",
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var key = e.currentTarget.dataset.accessKey;
+    this.toggleDestroy(e.currentTarget.dataset.accessKey);
+  },
+  toggleDestroy: function(key) {
+    var state = this.state;
+    if (state.destroy && !key) {
+      delete(state.destroy);
+    } else {
+      state.destroy = key;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(key) {
     promise.del("/api/universe/" + this.props.uid + "/access_key",
       JSON.stringify({access_key: key}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -70,14 +81,18 @@ var AccessKey = React.createClass({displayName: "AccessKey",
         )
       ), 
       this.state.access_keys.map(function(elem) {
-        return React.createElement("div", {className: "control-group", key: elem}, 
-          React.createElement("p", {style: {display: "inline-block"}}, 
-            React.createElement("a", {href: "/key/" + elem}, elem)
-          ), 
+        var trash =
           React.createElement("button", {type: "submit", className: "btn btn-default", 
             onClick: this.destroyHandler, "data-access-key": elem, 
             style: {marginLeft: "0.5em"}}, 
             React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+          );
+        return React.createElement("div", {className: "control-group", key: elem}, 
+          React.createElement("p", {style: {display: "inline-block"}}, 
+            React.createElement("a", {href: "/key/" + elem}, elem), 
+            this.state.destroy === elem ?
+              React.createElement(ConfirmBox, {payload: elem, callback: this.destroyCallback, 
+              close: this.toggleDestroy}, trash) : trash
           )
         );
       }.bind(this))

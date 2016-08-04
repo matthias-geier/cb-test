@@ -44,7 +44,18 @@ var AccessKey = React.createClass({
   },
   destroyHandler: function(e) {
     e.preventDefault();
-    var key = e.currentTarget.dataset.accessKey;
+    this.toggleDestroy(e.currentTarget.dataset.accessKey);
+  },
+  toggleDestroy: function(key) {
+    var state = this.state;
+    if (state.destroy && !key) {
+      delete(state.destroy);
+    } else {
+      state.destroy = key;
+    }
+    this.setState(state);
+  },
+  destroyCallback: function(key) {
     promise.del("/api/universe/" + this.props.uid + "/access_key",
       JSON.stringify({access_key: key}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
@@ -70,15 +81,19 @@ var AccessKey = React.createClass({
         </button>
       </form>
       {this.state.access_keys.map(function(elem) {
-        return <div className="control-group" key={elem}>
-          <p style={{display: "inline-block"}}>
-            <a href={"/key/" + elem}>{elem}</a>
-          </p>
+        var trash =
           <button type="submit" className="btn btn-default"
             onClick={this.destroyHandler} data-access-key={elem}
             style={{marginLeft: "0.5em"}}>
             <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-          </button>
+          </button>;
+        return <div className="control-group" key={elem}>
+          <p style={{display: "inline-block"}}>
+            <a href={"/key/" + elem}>{elem}</a>
+            {this.state.destroy === elem ?
+              <ConfirmBox payload={elem} callback={this.destroyCallback}
+              close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
+          </p>
         </div>;
       }.bind(this))}
     </div>;
