@@ -10,13 +10,23 @@ task :redis do
 end
 
 task reports: :redis do
-  universes = $redis.smembers(Universe::LIST_KEY).map do |uid|
-    Universe.to_h(uid, true)
-  end.sort do |universe|
-    universe["updated_at"]
-  end.reverse
+  universes = $redis.smembers(Universe::LIST_KEY).
+    map { |uid| Universe.to_h(uid, true) }.
+    sort { |universe, other| universe["updated_at"] <=> other["updated_at"] }.
+    reverse
   puts "universe count: #{universes.count}"
   universes.each do |universe|
     puts "universe #{universe["title"]} #{universe["uid"]} #{universe["updated_at"]} - prop count #{universe["props"].count} - story count #{universe["stories"].count} - access #{universe["access_keys"].first}"
+  end
+end
+
+task delete: :redis do |_t, args|
+  args.extras.each do |uid|
+    unless Universe.exists?(uid)
+      puts "#{uid} not a uid"
+      next
+    end
+
+    Universe.delete(uid)
   end
 end
