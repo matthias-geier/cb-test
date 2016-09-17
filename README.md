@@ -2,10 +2,9 @@
 
 Bugs:
 
-Features:
-
 Fix titles -> right now none are there
-Add confirmation for deleting access key
+
+Features:
 
 Epics:
 
