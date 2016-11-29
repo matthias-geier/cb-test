@@ -1,4 +1,4 @@
-FROM ruby:2.2.4-slim
+FROM ruby:2.3.1-slim
 
 RUN apt-get update
 RUN apt-get install -y nodejs npm
