@@ -1,8 +1,6 @@
 require "redis"
 Dir["model/*.rb"].each { |f| require "./#{f}" }
 
-# production: redis://h:spsp51uonga22a5977vhp1dn71@ec2-54-217-222-237.eu-west-1.compute.amazonaws.com:10769
-
 task :redis do
   redis_uri = URI.parse(ENV["REDIS_URL"] || "redis://localhost:6379/")
   $redis = Redis.new(host: redis_uri.host, port: redis_uri.port, db: 0,

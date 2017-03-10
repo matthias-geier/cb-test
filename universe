@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require "net/http"
+require "json"
+require "pp"
+
+module Cookies
+  extend self
+
+  FILENAME = ".cookies"
+
+  def read
+    return unless File.exist?(FILENAME)
+    return File.open(FILENAME) { |f| f.read.split("\n").join("; ") }
+  end
+
+  def store(cookies)
+    return unless cookies.is_a?(Array)
+    File.open(FILENAME, 'w') { |f| f.print(cookies.join("\n")) }
+  end
+
+  def with
+    response = yield(read)
+    store(response.get_fields("set-cookie")&.map { |c| c.split("; ").first })
+    return response
+  end
+end
+
+module Request
+  extend self
+
+  BASE = URI("http://localhost:3000/api/")
+
+  def join(path)
+    BASE.merge(path)
+  end
+
+  def prepare(*args)
+    args.map { |a| a.split("=", 2) }.to_h
+  end
+
+  def apply(proto, url, data)
+    case proto.downcase
+    when "get"
+      url.query = URI.encode_www_form(data)
+      yield(url)
+    else
+      r = yield(url)
+      r["Content-type"] = "application/json"
+      r.body = data.to_json
+      r
+    end
+  end
+
+  def request(proto, path, *args)
+    url = join(path)
+    Cookies.with do |cookies|
+      Net::HTTP.start(url.host, url.port, use_ssl: url.scheme == "https") do |h|
+        r = apply(proto, url, prepare(*args)) do |u|
+          Net::HTTP.const_get(proto.capitalize).new(u)
+        end
+        r["Cookie"] = cookies unless cookies.nil?
+        h.request(r)
+      end
+    end
+  end
+end
+
+response = Request.request(*ARGV)
+begin
+  pp JSON.parse(response.body)
+rescue JSON::ParserError
+  pp response.to_hash
+  puts response.body
+end
