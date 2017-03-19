@@ -32,7 +32,7 @@ module Prop
   end
 
   def update(uid, pid, fields)
-    fields.delete(:pid)
+    FIELDS.each { |k| fields.delete(k) }
     full_id = character_key(uid, pid)
     ($redis.hgetall(full_id).keys - FIELDS - fields.keys).each do |field|
       $redis.hdel(full_id, field)

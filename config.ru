@@ -1,6 +1,10 @@
 require 'grape'
 require 'redis'
+require "simple_can"
 
+SimpleCan.strategy = SimpleCan::BasicStrategy
+
+Dir["lib/*.rb"].each { |f| require "./#{f}" }
 Dir["model/*.rb"].each { |f| require "./#{f}" }
 require './grapes/universe_api.rb'
 require './grapes/key_api.rb'

@@ -22,8 +22,21 @@ module StoryHelpers
   end
 end
 
+module ParamHelpers
+  extend Grape::API::Helpers
+
+  def validate_params!
+    if params.values.any? { |v| v.to_s.length > 1000 }
+      error!({status: 400, body: "Field can contain max 1000 characters"}, 400)
+    elsif params.count > 25
+      error!({status: 400, body: "Max 25 fields allowed"}, 400)
+    end
+  end
+end
+
 module SessionHelpers
   extend Grape::API::Helpers
+  include SimpleCan
 
   def access_keys
     JSON.parse(env["rack.session"]["keys"] || "[]").select do |k|
@@ -42,18 +55,25 @@ module SessionHelpers
   end
 
   def access_uid!
-    return if AccessKey.access?(access_keys, params[:uid])
-    error!({status: 403, body: "Cannot access Universe"}, 403)
+    relevant_keys = AccessKey.relevant_for(access_keys, params[:uid])
+    max_cap = AccessKey.max_capability(relevant_keys)
+    !relevant_keys.empty? &&
+      (UniverseApi.capability = SimpleCan.strategy.roles[max_cap]) ||
+      error!({status: 403, body: "Cannot access Universe"}, 403)
   end
 
   def last_access_key!
-    return if AccessKey.list(params[:uid]).size > 1
-    error!({status: 500, body: "Cannot destroy last access key"}, 500)
+    cap = SimpleCan.strategy.to_capability("manage")
+    keys = AccessKey.list(params[:uid]) - [params[:access_key]]
+    return if AccessKey.max_capability(keys) == cap
+    error!({status: 500, body: "Cannot destroy last manage access key"}, 500)
   end
 end
 
 class UniverseApi < Grape::API
-  version 'v1', using: :accept_version_header
+  include SimpleCan
+
+  version 'v2', using: :accept_version_header
   format :json
   prefix :api
 
@@ -61,8 +81,24 @@ class UniverseApi < Grape::API
     header "Cache-Control", "no-cache"
   end
 
+  after do
+    UniverseApi.capability = nil
+  end
+
+  rescue_from SimpleCan::Unauthorized do |e|
+    UniverseApi.capability = nil
+    error!({status: 401, body: e.message}, 401)
+  end
+
+  rescue_from :all do |e|
+    UniverseApi.capability = nil
+    error!({status: 500, body: "Internal Server Error"}, 500)
+  end
+
+
   helpers SessionHelpers
   helpers StoryHelpers
+  helpers ParamHelpers
 
   namespace :session do
     get do
@@ -70,10 +106,10 @@ class UniverseApi < Grape::API
     end
 
     params do
-      requires :keys, type: Array, desc: "Known universe access keys"
+      requires :access_keys, type: Array, desc: "Known universe access keys"
     end
     post do
-      {status: 200, body: override_access_keys!(params["keys"])}
+      {status: 200, body: override_access_keys!(params["access_keys"])}
     end
   end
 
@@ -88,10 +124,12 @@ class UniverseApi < Grape::API
     get ":uid" do
       validate_uid!
       access_uid!
+      read!
       {status: 200, body: Universe.to_h(params[:uid])}
     end
 
     post do
+      UniverseApi.capability = "manage" # of course I can manage my new stuff
       universe = Universe.create
       append_access_keys!(universe["access_keys"])
       {status: 200, body: universe}
@@ -104,6 +142,7 @@ class UniverseApi < Grape::API
     put ":uid" do
       validate_uid!
       access_uid!
+      write!
       {status: 200, body: Universe.update(params[:uid], declared(params))}
     end
 
@@ -113,6 +152,7 @@ class UniverseApi < Grape::API
     delete ":uid" do
       validate_uid!
       access_uid!
+      manage!
       Universe.delete(params[:uid])
       {status: 200, body: {deleted: params[:uid]}}
     end
@@ -123,6 +163,7 @@ class UniverseApi < Grape::API
     post ":uid/access_key" do
       validate_uid!
       access_uid!
+      manage!
       AccessKey.create(params[:uid])
       {status: 200, body: Universe.to_h(params[:uid])}
     end
@@ -130,10 +171,27 @@ class UniverseApi < Grape::API
     params do
       requires :uid, type: String, desc: "Universe id"
       requires :access_key, type: String, desc: "Access key"
+      optional :cap, type: String, desc: "Capability", values:
+        SimpleCan.strategy.roles
     end
-    delete ":uid/access_key" do
+    put ":uid/access_key/:access_key" do
       validate_uid!
       access_uid!
+      manage!
+      last_access_key!
+      validate_params!
+      AccessKey.update(params[:access_key], params)
+      {status: 200, body: Universe.to_h(params[:uid])}
+    end
+
+    params do
+      requires :uid, type: String, desc: "Universe id"
+      requires :access_key, type: String, desc: "Access key"
+    end
+    delete ":uid/access_key/:access_key" do
+      validate_uid!
+      access_uid!
+      manage!
       last_access_key!
       AccessKey.delete(params[:access_key])
       {status: 200, body: Universe.to_h(params[:uid])}
@@ -147,7 +205,12 @@ class UniverseApi < Grape::API
         validate_uid!
       end
 
+      after_validation do
+        access_uid!
+      end
+
       get "backup" do
+        manage!
         data = Universe.backup(params[:uid])
         content_type "application/octet-stream"
         title = "backup_#{params[:uid]}"
@@ -161,12 +224,14 @@ class UniverseApi < Grape::API
         requires :data, type: Hash, desc: "Universe dump"
       end
       post "restore" do
+        manage!
         Universe.restore(params[:uid], params[:data])
         {status: 200, body: true}
       end
 
       namespace :prop do
         get do
+          read!
           {status: 200, body: Prop.list(params[:uid])}
         end
 
@@ -175,6 +240,7 @@ class UniverseApi < Grape::API
         end
         get ":pid" do
           validate_pid!
+          read!
           {status: 200, body: Prop.to_h(params[:uid], params[:pid])}
         end
 
@@ -183,6 +249,7 @@ class UniverseApi < Grape::API
             desc: "Unique Prop id"
         end
         post do
+          write!
           if Prop.exists?(params[:uid], params[:pid])
             error!({status: 400, body: "Prop id taken"}, 400)
           end
@@ -190,6 +257,7 @@ class UniverseApi < Grape::API
           if params[:pid].size >= 25
             error!({status: 400, body: "Prop id must be shorter than 25"}, 400)
           end
+          validate_params!
           {status: 200, body: Prop.create(params[:uid], params)}
         end
 
@@ -198,6 +266,8 @@ class UniverseApi < Grape::API
         end
         put ":pid" do
           validate_pid!
+          write!
+          validate_params!
           {
             status: 200,
             body: Prop.update(params[:uid], params[:pid], params)
@@ -209,6 +279,7 @@ class UniverseApi < Grape::API
         end
         delete ":pid" do
           validate_pid!
+          write!
           {status: 200, body: Prop.delete(params[:uid], params[:pid])}
         end
       end
@@ -222,8 +293,13 @@ class UniverseApi < Grape::API
         validate_uid!
       end
 
+      after_validation do
+        access_uid!
+      end
+
       namespace :story do
         get do
+          read!
           {status: 200, body: Story.list(params[:uid])}
         end
 
@@ -231,6 +307,8 @@ class UniverseApi < Grape::API
           requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
         end
         put "swap" do
+          validate_sid!
+          write!
           Story.swap_story(params[:uid], params[:num])
           {status: 200, body: Story.list(params[:uid])}
         end
@@ -240,6 +318,7 @@ class UniverseApi < Grape::API
         end
         get ":sid" do
           validate_sid!
+          read!
           {status: 200, body: Story.to_h(params[:uid], params[:sid])}
         end
 
@@ -247,6 +326,7 @@ class UniverseApi < Grape::API
           requires :title, type: String, allow_blank: false, desc: "Story title"
         end
         post do
+          write!
           {status: 200, body: Story.create(params[:uid], declared(params))}
         end
 
@@ -256,6 +336,7 @@ class UniverseApi < Grape::API
         end
         put ":sid" do
           validate_sid!
+          write!
           {status: 200, body: Story.update(params[:uid], params[:sid],
             declared(params))}
         end
@@ -265,6 +346,7 @@ class UniverseApi < Grape::API
         end
         delete ":sid" do
           validate_sid!
+          write!
           {status: 200, body: Story.delete(params[:uid], params[:sid])}
         end
 
@@ -274,6 +356,10 @@ class UniverseApi < Grape::API
         namespace ":sid" do
           before_validation do
             validate_sid!
+          end
+
+          after_validation do
+            write!
           end
 
           params do

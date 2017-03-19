@@ -36,7 +36,8 @@ module Request
   end
 
   def prepare(*args)
-    args.map { |a| a.split("=", 2) }.to_h
+    args.map { |a| a.split("=", 2) }.
+      map { |k, v| [k, begin; JSON.parse(v); rescue; v; end] }.to_h
   end
 
   def apply(proto, url, data)

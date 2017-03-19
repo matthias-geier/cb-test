@@ -2,6 +2,7 @@ require "securerandom"
 
 module Universe
   extend self
+  include SimpleCan
 
   LIST_KEY = "universes"
 
@@ -30,7 +31,7 @@ module Universe
   end
 
   def list(access_keys)
-    AccessKey.list_uids(access_keys).map { |uid| to_h(uid, false) }
+    AccessKey.list_uids(access_keys) { |cap, uid| to_h(uid, false) }
   end
 
   def update(uid, fields)
@@ -56,9 +57,7 @@ module Universe
 
   def restore(uid, data)
     Prop.list(uid).each { |pid| Prop.delete(uid, pid) }
-    (data.delete("props") || []).each do |prop|
-      Prop.create(uid, prop)
-    end
+    (data.delete("props") || []).each { |prop| Prop.create(uid, prop) }
 
     Story.list(uid).each { |story| Story.delete(uid, story["sid"]) }
     (data.delete("stories") || []).each do |story|
@@ -90,7 +89,9 @@ module Universe
   def to_h(uid, full = true)
     db_hash = $redis.hgetall(universe_key(uid))
     db_hash["updated_at"] = Time.at(db_hash["updated_at"].to_i).utc
-    db_hash["access_keys"] = AccessKey.list(uid)
+    if manage?
+      db_hash["access_keys"] = AccessKey.list(uid).map { |k| AccessKey.to_h(k) }
+    end
     return db_hash unless full
 
     db_hash["props"] = Prop.list(uid)
