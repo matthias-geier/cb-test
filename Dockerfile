@@ -15,4 +15,4 @@ RUN bundle
 ADD . $rootdir/
 
 RUN jsx -x jsx jsx/ files/
-CMD ["bundle", "exec", "thin", "start"]
+CMD bundle exec puma -C puma.rb -b tcp://0.0.0.0:3000

@@ -90,12 +90,6 @@ class UniverseApi < Grape::API
     error!({status: 401, body: e.message}, 401)
   end
 
-  rescue_from :all do |e|
-    UniverseApi.capability = nil
-    error!({status: 500, body: "Internal Server Error"}, 500)
-  end
-
-
   helpers SessionHelpers
   helpers StoryHelpers
   helpers ParamHelpers
@@ -131,8 +125,9 @@ class UniverseApi < Grape::API
     post do
       UniverseApi.capability = "manage" # of course I can manage my new stuff
       universe = Universe.create
-      append_access_keys!(universe["access_keys"])
-      {status: 200, body: universe}
+      append_access_keys!(universe["access_keys"].map { |k| k["id"] })
+      status(201)
+      {status: 201, body: universe}
     end
 
     params do
@@ -154,59 +149,53 @@ class UniverseApi < Grape::API
       access_uid!
       manage!
       Universe.delete(params[:uid])
-      {status: 200, body: {deleted: params[:uid]}}
-    end
-
-    params do
-      requires :uid, type: String, desc: "Universe id"
-    end
-    post ":uid/access_key" do
-      validate_uid!
-      access_uid!
-      manage!
-      AccessKey.create(params[:uid])
-      {status: 200, body: Universe.to_h(params[:uid])}
-    end
-
-    params do
-      requires :uid, type: String, desc: "Universe id"
-      requires :access_key, type: String, desc: "Access key"
-      optional :cap, type: String, desc: "Capability", values:
-        SimpleCan.strategy.roles
-    end
-    put ":uid/access_key/:access_key" do
-      validate_uid!
-      access_uid!
-      manage!
-      last_access_key!
-      validate_params!
-      AccessKey.update(params[:access_key], params)
-      {status: 200, body: Universe.to_h(params[:uid])}
-    end
-
-    params do
-      requires :uid, type: String, desc: "Universe id"
-      requires :access_key, type: String, desc: "Access key"
-    end
-    delete ":uid/access_key/:access_key" do
-      validate_uid!
-      access_uid!
-      manage!
-      last_access_key!
-      AccessKey.delete(params[:access_key])
-      {status: 200, body: Universe.to_h(params[:uid])}
+      status(204)
+      ""
     end
 
     params do
       requires :uid, type: String, desc: "Universe id"
     end
     namespace ":uid" do
-      before_validation do
+      after_validation do
         validate_uid!
+        access_uid!
       end
 
-      after_validation do
-        access_uid!
+      namespace "access_key" do
+        after_validation do
+          manage!
+        end
+
+        post do
+          AccessKey.create(params[:uid])
+          status(201)
+          {status: 201, body: Universe.to_h(params[:uid])}
+        end
+
+        params do
+          requires :access_key, type: String, desc: "Access key"
+        end
+        namespace ":access_key" do
+          after_validation do
+            last_access_key!
+          end
+
+          params do
+            optional :cap, type: String, desc: "Capability", values:
+              SimpleCan.strategy.roles
+          end
+          put do
+            validate_params!
+            {status: 200, body: AccessKey.update(params[:access_key], params)}
+          end
+
+          delete do
+            AccessKey.delete(params[:access_key])
+            status(204)
+            ""
+          end
+        end
       end
 
       get "backup" do
@@ -236,15 +225,6 @@ class UniverseApi < Grape::API
         end
 
         params do
-          requires :pid, type: String, desc: "Prop id"
-        end
-        get ":pid" do
-          validate_pid!
-          read!
-          {status: 200, body: Prop.to_h(params[:uid], params[:pid])}
-        end
-
-        params do
           requires :pid, type: String, regexp: /\A[a-z_]+\z/,
             desc: "Unique Prop id"
         end
@@ -258,43 +238,39 @@ class UniverseApi < Grape::API
             error!({status: 400, body: "Prop id must be shorter than 25"}, 400)
           end
           validate_params!
-          {status: 200, body: Prop.create(params[:uid], params)}
+          status(201)
+          {status: 201, body: Prop.create(params[:uid], params)}
         end
 
         params do
           requires :pid, type: String, desc: "Prop id"
         end
-        put ":pid" do
-          validate_pid!
-          write!
-          validate_params!
-          {
-            status: 200,
-            body: Prop.update(params[:uid], params[:pid], params)
-          }
-        end
+        namespace ":pid" do
+          after_validation do
+            validate_pid!
+          end
 
-        params do
-          requires :pid, type: String, desc: "Prop id"
-        end
-        delete ":pid" do
-          validate_pid!
-          write!
-          {status: 200, body: Prop.delete(params[:uid], params[:pid])}
-        end
-      end
-    end
+          get do
+            read!
+            {status: 200, body: Prop.to_h(params[:uid], params[:pid])}
+          end
 
-    params do
-      requires :uid, type: String, desc: "Universe id"
-    end
-    namespace ":uid" do
-      before_validation do
-        validate_uid!
-      end
+          put do
+            write!
+            validate_params!
+            {
+              status: 200,
+              body: Prop.update(params[:uid], params[:pid], params)
+            }
+          end
 
-      after_validation do
-        access_uid!
+          delete do
+            write!
+            Prop.delete(params[:uid], params[:pid])
+            status(204)
+            ""
+          end
+        end
       end
 
       namespace :story do
@@ -307,19 +283,9 @@ class UniverseApi < Grape::API
           requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
         end
         put "swap" do
-          validate_sid!
           write!
           Story.swap_story(params[:uid], params[:num])
           {status: 200, body: Story.list(params[:uid])}
-        end
-
-        params do
-          requires :sid, type: String, desc: "Story id"
-        end
-        get ":sid" do
-          validate_sid!
-          read!
-          {status: 200, body: Story.to_h(params[:uid], params[:sid])}
         end
 
         params do
@@ -327,27 +293,22 @@ class UniverseApi < Grape::API
         end
         post do
           write!
-          {status: 200, body: Story.create(params[:uid], declared(params))}
-        end
-
-        params do
-          requires :sid, type: String, desc: "Story id"
-          optional :title, type: String, allow_blank: false, desc: "Story title"
-        end
-        put ":sid" do
-          validate_sid!
-          write!
-          {status: 200, body: Story.update(params[:uid], params[:sid],
-            declared(params))}
+          status(201)
+          {status: 201, body: Story.create(params[:uid], declared(params))}
         end
 
         params do
           requires :sid, type: String, desc: "Story id"
         end
-        delete ":sid" do
-          validate_sid!
-          write!
-          {status: 200, body: Story.delete(params[:uid], params[:sid])}
+        namespace ":sid" do
+          after_validation do
+            validate_sid!
+          end
+
+          get do
+            read!
+            {status: 200, body: Story.to_h(params[:uid], params[:sid])}
+          end
         end
 
         params do
@@ -363,11 +324,27 @@ class UniverseApi < Grape::API
           end
 
           params do
+            optional :title, type: String, allow_blank: false,
+              desc: "Story title"
+          end
+          put do
+            {status: 200, body: Story.update(params[:uid], params[:sid],
+              declared(params))}
+          end
+
+          delete do
+            Story.delete(params[:uid], params[:sid])
+            status(204)
+            ""
+          end
+
+          params do
             requires :pose, type: String, regexp: /\A.+\z/m,
               desc: "Pose text"
           end
           post "pose" do
-            {status: 200, body: Story.pose(params[:uid], params[:sid],
+            status(201)
+            {status: 201, body: Story.pose(params[:uid], params[:sid],
               params[:pose])}
           end
 
@@ -375,8 +352,9 @@ class UniverseApi < Grape::API
             requires :num, type: String, desc: "Pose num"
           end
           delete "pose" do
-            {status: 200, body: Story.unpose(params[:uid], params[:sid],
-              params[:num])}
+            Story.unpose(params[:uid], params[:sid], params[:num])
+            status(204)
+            ""
           end
 
           params do

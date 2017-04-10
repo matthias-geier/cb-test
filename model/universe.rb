@@ -31,7 +31,7 @@ module Universe
   end
 
   def list(access_keys)
-    AccessKey.list_uids(access_keys) { |cap, uid| to_h(uid, false) }
+    AccessKey.list_uids(access_keys) { |uid, cap| to_h(uid, false) }
   end
 
   def update(uid, fields)
@@ -75,8 +75,7 @@ module Universe
     $redis.del(Prop.list_key(uid))
     Story.list(uid).each { |story| Story.delete(uid, story["sid"]) }
     $redis.del(Story.list_key(uid))
-    AccessKey.list(uid).each { |k| $redis.del(AccessKey.access_key_key(k)) }
-    $redis.del(AccessKey.access_list_key(uid))
+    AccessKey.list(uid).each { |k| AccessKey.delete(k) }
     $redis.del(universe_key(uid))
     $redis.srem(LIST_KEY, uid)
     return true

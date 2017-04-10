@@ -39,6 +39,7 @@ module Prop
     end
 
     fields.each do |field, value|
+      value = value&.to_s
       if value.nil? || value.empty?
         $redis.hdel(full_id, field)
       else

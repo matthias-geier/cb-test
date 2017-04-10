@@ -1,7 +1,7 @@
 module AccessKey
   extend self
 
-  FIELDS = %w(id access_key uid cap updated_at)
+  FIELDS = %w(id access_key uid updated_at)
 
   HASH_ACCESS_KEY = "hash_access_key/%{key}"
   SET_UNIVERSE_ACCESS_KEYS = "set_universes/%{uid}/access_keys"

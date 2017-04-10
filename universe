@@ -70,7 +70,8 @@ end
 response = Request.request(*ARGV)
 begin
   pp JSON.parse(response.body)
-rescue JSON::ParserError
+rescue TypeError, JSON::ParserError
   pp response.to_hash
+  puts response.code
   puts response.body
 end

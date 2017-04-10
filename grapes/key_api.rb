@@ -13,12 +13,12 @@ class KeyApi < Grape::API
       requires :access_key, type: String, desc: "Access key"
     end
     get ":access_key" do
-      uid = AccessKey.list_uids([params["access_key"]]).first
+      uid = AccessKey.list_uids([params["access_key"]]) { |uid, cap| uid }.first
       if uid.nil?
         error!({status: 403, body: "Cannot access Universe"}, 403)
       end
       append_access_keys!([params["access_key"]])
-      redirect "/universe/#{uid}"
+      redirect "/universe/#{uid}", permanent: true
     end
   end
 end
