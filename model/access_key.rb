@@ -5,6 +5,7 @@ module AccessKey
 
   HASH_ACCESS_KEY = "hash_access_key/%{key}"
   SET_UNIVERSE_ACCESS_KEYS = "set_universes/%{uid}/access_keys"
+  LIST_BROADCAST_ACCESS_KEY = "list_broadcast_access_key/%{key}"
 
   def new_access_key
     SecureRandom.hex(20)
@@ -16,6 +17,10 @@ module AccessKey
 
   def set_universe_access_keys(uid)
     SET_UNIVERSE_ACCESS_KEYS % {uid: uid}
+  end
+
+  def list_broadcast_access_key(key)
+    LIST_BROADCAST_ACCESS_KEY % {key: key}
   end
 
   def relevant_for(access_keys, uid)
@@ -32,6 +37,23 @@ module AccessKey
 
   def list(uid)
     $redis.smembers(set_universe_access_keys(uid))
+  end
+
+  def broadcast(blacklist, payload)
+    uid_keys = list(payload[:uid])
+    payload[:broadcasted_at] = Time.now.to_i
+    payload[:who] = blacklist & uid_keys
+    (uid_keys - blacklist).each do |key|
+      $redis.lpush(list_broadcast_access_key(key), payload.to_json)
+    end
+  end
+
+  def messages(uid, access_keys)
+    return (list(uid) & access_keys).reduce([]) do |acc, key|
+      payloads = $redis.lrange(list_broadcast_access_key(key), 0, -1)
+      $redis.del(list_broadcast_access_key(key))
+      acc | payloads.map { |payload| JSON.parse(payload) }
+    end.sort { |payload| payload[:broadcased_at] }
   end
 
   def list_uids(access_keys)
