@@ -61,7 +61,7 @@ var Props = React.createClass({displayName: "Props",
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 201) {
         window.history.pushState({}, pid, url + "/" + pid);
         var state = this.state;
         state.props.push(pid);
@@ -92,13 +92,13 @@ var Props = React.createClass({displayName: "Props",
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 204) {
         this.closePropIf(pid);
         var state = this.state;
         state.props.splice(state.props.indexOf(pid), 1);
         this.setState(state);
       } else {
+        var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
@@ -312,7 +312,7 @@ var Prop = React.createClass({displayName: "Prop",
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
         React.createElement("button", {type: "submit", className: "btn btn-default", 
           onClick: this.toggleEditHandler}, 
-          React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+          React.createElement("span", {className: "glyphicon glyphicon-edit", "aria-hidden": "true"})
         )
       ), 
       this.state.editable ? this.renderEditable() : this.renderPlain()

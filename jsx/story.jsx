@@ -62,7 +62,7 @@ var Stories = React.createClass({
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (payload.status === 201) {
         window.history.pushState({}, payload.body.title,
           url + "/" + payload.body.sid);
         var state = this.state;
@@ -93,8 +93,7 @@ var Stories = React.createClass({
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 204) {
         this.closeStoryIf(sid);
         var state = this.state;
         var i = 0;
@@ -102,6 +101,7 @@ var Stories = React.createClass({
         state.stories.splice(i, 1);
         this.setState(state);
       } else {
+        var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
@@ -264,7 +264,7 @@ var Story = React.createClass({
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (payload.status === 201) {
         var state = this.state;
         state.story = payload.body;
         this.setState(state);
@@ -313,12 +313,16 @@ var Story = React.createClass({
       JSON.stringify({num: num}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 204) {
         var state = this.state;
-        state.story = payload.body;
+        state.story.poses.splice(num - 1, 1);
+        state.story.poses = state.story.poses.map(function(pose, i) {
+          pose[0] = i + 1;
+          return pose;
+        });
         this.setState(state);
       } else {
+        var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
@@ -400,7 +404,7 @@ var Story = React.createClass({
     return <div className="col-xs-12 col-md-12">
       <h3>{story.title} <button type="submit" className="btn btn-default"
         onClick={this.toggleEdit}>
-        <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
+        <span className="glyphicon glyphicon-edit" aria-hidden="true" />
       </button></h3>
       {this.state.editable ? this.renderEdit() : ""}
       {this.renderPlain()}

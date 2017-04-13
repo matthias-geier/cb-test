@@ -29,7 +29,7 @@ var Session = React.createClass({
   saveHandler: function(e) {
     e.preventDefault();
     var access_keys = this.refs.access_keys.value.split("\n");
-    promise.post("/api/session", JSON.stringify({keys: access_keys}),
+    promise.post("/api/session", JSON.stringify({access_keys: access_keys}),
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);

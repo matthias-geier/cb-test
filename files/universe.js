@@ -40,7 +40,7 @@ var Universes = React.createClass({displayName: "Universes",
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (payload.status === 201) {
         window.history.pushState({}, payload.body.uid,
           "/universe/" + payload.body.uid);
         this.update();
@@ -86,11 +86,11 @@ var Universes = React.createClass({displayName: "Universes",
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 204) {
         this.closeUniverseIf(uid);
         this.update();
       } else {
+        var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
@@ -212,7 +212,11 @@ var Universe = React.createClass({displayName: "Universe",
         { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
         var payload = JSON.parse(text);
-        window.location.assign("/universe/" + this.props.uid);
+        if (payload.status === 200) {
+          window.location.assign("/universe/" + this.props.uid);
+        } else {
+          this.props.opts.addError(payload.body || payload.error);
+        }
       }.bind(this));
     }.bind(this);
     reader.readAsText(file);
@@ -269,7 +273,8 @@ var Universe = React.createClass({displayName: "Universe",
     var title = universe.title || universe.uid;
     var current = this.currentRoute();
     return React.createElement("div", {className: "col-xs-12 col-md-12", style: {backgroundColor: "#e5e5e5", minHeight: "50%", borderRadius: "5px"}}, 
-      React.createElement(AccessKey, {uid: universe.uid, opts: opts}, 
+      React.createElement(AccessKeys, {uid: universe.uid, opts: opts, 
+        access_keys: this.state.universe.access_keys}, 
         React.createElement("h2", {style: {display: "inline-block"}}, 
           React.createElement("a", {href: "#", onClick: this.handleHref(title, "")}, title)
         ), 
@@ -292,7 +297,7 @@ var Universe = React.createClass({displayName: "Universe",
           verticalAlign: "middle", marginLeft: "2em"}}, 
           React.createElement("button", {type: "submit", className: "btn btn-default", 
             onClick: this.toggleEditHandler}, 
-            React.createElement("span", {className: "glyphicon glyphicon-pencil", "aria-hidden": "true"})
+            React.createElement("span", {className: "glyphicon glyphicon-edit", "aria-hidden": "true"})
           )
         )
       ), 

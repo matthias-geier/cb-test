@@ -61,7 +61,7 @@ var Props = React.createClass({
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
       var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 201) {
         window.history.pushState({}, pid, url + "/" + pid);
         var state = this.state;
         state.props.push(pid);
@@ -92,13 +92,13 @@ var Props = React.createClass({
     promise.del("/api" + url, undefined,
       { "Content-Type": "application/json" }).then(function(err, text, xhr) {
 
-      var payload = JSON.parse(text);
-      if (payload.status === 200) {
+      if (xhr.status === 204) {
         this.closePropIf(pid);
         var state = this.state;
         state.props.splice(state.props.indexOf(pid), 1);
         this.setState(state);
       } else {
+        var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);
       }
     }.bind(this));
@@ -312,7 +312,7 @@ var Prop = React.createClass({
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
           onClick={this.toggleEditHandler}>
-          <span className="glyphicon glyphicon-pencil" aria-hidden="true" />
+          <span className="glyphicon glyphicon-edit" aria-hidden="true" />
         </button>
       </form>
       {this.state.editable ? this.renderEditable() : this.renderPlain()}
