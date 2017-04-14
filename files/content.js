@@ -51,9 +51,9 @@ var Content = React.createClass({displayName: "Content",
       addError: this.addError,
       reqUrl: this.reqUrl
     };
-    return React.createElement("div", {className: "container"}, 
+    return React.createElement("div", {className: "container-fluid"}, 
       this.errors(), 
-      React.createElement(Universes, {key: this.state.last_render, opts: opts})
+      React.createElement(Title, {key: this.state.last_render, opts: opts})
     );
   }
 });

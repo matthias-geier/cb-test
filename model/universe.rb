@@ -88,6 +88,9 @@ module Universe
   def to_h(uid, full = true)
     db_hash = $redis.hgetall(universe_key(uid))
     db_hash["updated_at"] = Time.at(db_hash["updated_at"].to_i).utc
+    if Universe.capability
+      db_hash["capability"] = SimpleCan.strategy.roles[Universe.capability]
+    end
     if manage?
       db_hash["access_keys"] = AccessKey.list(uid).map { |k| AccessKey.to_h(k) }
     end
