@@ -41,7 +41,7 @@ var Title = React.createClass({
     };
     return <div className="row">
       <UniverseList opts={opts} uid={this.state.uid}>
-        <h1 style={{display: "inline-block", lineHeight: 1.5, fontSize: "4em"}}>
+        <h1 style={{display: "inline-block", lineHeight: 1.5}}>
           <a href="#" onClick={this.hrefHandler}>
             <span style={{textTransform: "uppercase"}}>rpuniverse</span>
             <span style={{fontVariant: "small-caps"}}>.org</span>

@@ -1,170 +1,3 @@
-var Props = React.createClass({
-  getInitialState: function() {
-    return {};
-  },
-  updateProp: function() {
-    var state = this.state;
-    var match = this.props.opts.reqUrl().
-      match("^\/universe\/[^\/]+\/prop\/([^\/]+)");
-    if (match) {
-      if (match[1] !== state.pid) {
-        state.pid = match[1];
-        this.setState(state);
-      }
-    } else {
-      if ("pid" in state) {
-        delete(state.pid);
-        this.setState(state);
-      }
-    }
-  },
-  toggleNewHandler: function(e) {
-    e.preventDefault();
-    this.toggleNew();
-  },
-  toggleNew: function() {
-    var state = this.state;
-    if (state.create_new) {
-      delete(state.create_new);
-    } else {
-      state.create_new = true;
-    }
-    this.setState(state);
-  },
-  closePropIf: function(pid) {
-    if (pid && this.state.pid !== pid) {
-      return;
-    }
-    window.history.pushState({}, this.props.uid,
-      "/universe/" + this.props.uid);
-    this.updateProp();
-  },
-  propHrefHandler: function(e) {
-    e.preventDefault();
-    var pid = e.target.dataset.pid;
-    var url = "/universe/" + this.props.uid + "/prop";
-    var state = this.state;
-    if (pid) {
-      url += "/" + pid;
-      state.pid = pid;
-    } else {
-      delete(state.pid);
-    }
-    window.history.pushState({}, pid, url);
-    this.setState(state);
-  },
-  createNewHandler: function(e) {
-    e.preventDefault();
-    var pid = this.refs.pid.value;
-    var url = "/universe/" + this.props.uid + "/prop";
-    promise.post("/api" + url, JSON.stringify({pid: pid}),
-      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
-
-      var payload = JSON.parse(text);
-      if (xhr.status === 201) {
-        window.history.pushState({}, pid, url + "/" + pid);
-        var state = this.state;
-        state.props.push(pid);
-        state.props.sort();
-        this.setState(state);
-        this.toggleNew();
-        this.updateProp();
-      } else {
-        this.props.opts.addError(payload.body || payload.error);
-      }
-    }.bind(this));
-  },
-  destroyHandler: function(e) {
-    e.preventDefault();
-    this.toggleDestroy(e.currentTarget.dataset.pid);
-  },
-  toggleDestroy: function(pid) {
-    var state = this.state;
-    if (state.destroy && !pid) {
-      delete(state.destroy);
-    } else {
-      state.destroy = pid;
-    }
-    this.setState(state);
-  },
-  destroyCallback: function(pid) {
-    var url = "/universe/" + this.props.uid + "/prop/" + pid;
-    promise.del("/api" + url, undefined,
-      { "Content-Type": "application/json" }).then(function(err, text, xhr) {
-
-      if (xhr.status === 204) {
-        this.closePropIf(pid);
-        var state = this.state;
-        state.props.splice(state.props.indexOf(pid), 1);
-        this.setState(state);
-      } else {
-        var payload = JSON.parse(text);
-        this.props.opts.addError(payload.body || payload.error);
-      }
-    }.bind(this));
-  },
-  componentWillMount: function() {
-    var state = this.state;
-    state.props = this.props.props;
-    this.setState(state);
-  },
-  componentDidMount: function() {
-    this.updateProp();
-  },
-  renderPropList: function(propTag) {
-    return this.state.props.map(function(elem, i) {
-      var trash =
-        <a href="#" style={{marginLeft: "2em"}} onClick={this.destroyHandler}
-          data-pid={elem}>
-          <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-        </a>;
-      return <li key={elem+i}>
-        <a href="#" data-pid={elem}
-          onClick={this.propHrefHandler}>{elem}</a>
-        {this.state.destroy === elem ?
-          <ConfirmBox payload={elem} callback={this.destroyCallback}
-          close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
-        {propTag && elem == this.state.pid ? propTag : ""}
-      </li>;
-    }.bind(this));
-  },
-  renderNew: function() {
-    return <form className="form-inline" onSubmit={this.createNewHandler}>
-      <input className="form-control" ref="pid" maxlength="24"
-        placeholder="id (only a-z and _)" />
-      <input type="submit" className="btn btn-default" value="Create" />
-    </form>;
-  },
-  render: function() {
-    var opts = {
-      withState: this.props.opts.withState,
-      addError: this.props.opts.addError,
-      reqUrl: this.props.opts.reqUrl,
-      updateProp: this.updateProp
-    };
-    var propTag = this.state.pid ?
-      <Prop opts={opts} uid={this.props.uid} pid={this.state.pid}
-        key={this.state.pid} /> :
-      undefined;
-    return <div style={{border: "1px solid #ddd", borderTop: 0,
-      backgroundColor: "white"}} className="col-xs-12 col-md-12">
-      <h3 style={{display: "inline-block"}}>
-        <a href="#" onClick={this.propHrefHandler}>Props</a>
-      </h3>
-      <form className="form-inline" style={
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
-        <button type="submit" className="btn btn-default"
-          onClick={this.toggleNewHandler}>
-          <span className="glyphicon glyphicon-plus" aria-hidden="true" />
-        </button>
-      </form>
-      {this.state.create_new ? this.renderNew() : <div />}
-
-      <ul className="list-unstyled">{this.renderPropList(propTag)}</ul>
-    </div>;
-  }
-});
-
 var Prop = React.createClass({
   getInitialState: function() {
     return {};
@@ -256,19 +89,17 @@ var Prop = React.createClass({
         pairs[pairs.length - 1].push(key);
       }
     });
-    return pairs.map(function(key_pair) {
-      return <div className="row" key={key_pair}>{
-        key_pair.map(function(key, i) {
-          return <div className="col-xs-6 col-md-6" key={key}>
-            <blockquote className={i%2 === 1 ? "blockquote-reverse" : ""}>
-              <p style={{whiteSpace: "pre-line"}} dangerouslySetInnerHTML={
-                this.renderText(this.state.prop[key])} />
-              <footer style={{fontVariant: "small-caps"}}>{key}</footer>
-            </blockquote>
-          </div>;
-        }.bind(this))
-      }</div>;
-    }.bind(this));
+    return <div className="row">{
+      this.editableFields().map(function(field, i) {
+        return <div className="col-xs-12 col-md-3" key={field}>
+          <blockquote className={i%2 === 1 ? "blockquote-reverse" : ""}>
+            <p style={{whiteSpace: "pre-line"}} dangerouslySetInnerHTML={
+              this.renderText(this.state.prop[field])} />
+            <footer style={{fontVariant: "small-caps"}}>{field}</footer>
+          </blockquote>
+        </div>;
+      }.bind(this))
+    }</div>;
   },
   renderText: function(text) {
     text = String(text).
@@ -304,18 +135,22 @@ var Prop = React.createClass({
     if (!this.state.prop) { return <div />; }
 
     var prop = this.state.prop;
-    return <div className="col-xs-12 col-md-12">
+    return <div className="row">
+      <div className="col-xs-12">
       <h3 style={{display: "inline-block", textTransform: "uppercase"}}>
         {prop.pid}
       </h3>
-      <form className="form-inline" style={
-        {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
-        <button type="submit" className="btn btn-default"
-          onClick={this.toggleEditHandler}>
-          <span className="glyphicon glyphicon-edit" aria-hidden="true" />
-        </button>
-      </form>
+      {this.props.opts.can("write") ?
+        <form className="form-inline" style={{display: "inline-block",
+          verticalAlign: "middle", marginLeft: "2em"}}>
+          <button type="submit" className="btn btn-default"
+            onClick={this.toggleEditHandler} title="Edit">
+            <span className="glyphicon glyphicon-edit" aria-hidden="true" />
+          </button>
+        </form> :
+        ""}
       {this.state.editable ? this.renderEditable() : this.renderPlain()}
+      </div>
     </div>;
   }
 });

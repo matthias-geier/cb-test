@@ -71,7 +71,7 @@ var UniverseList = React.createClass({displayName: "UniverseList",
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateUniverses: this.update,
+      updateUniverses: this.updateAccessible,
       updateUniverse: this.props.opts.updateUniverse
     };
     return React.createElement("div", {className: "col-xs-12"}, 
@@ -80,31 +80,34 @@ var UniverseList = React.createClass({displayName: "UniverseList",
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}, 
           React.createElement("button", {type: "submit", className: "btn btn-default", 
-            onClick: this.createHandler}, 
+            onClick: this.createHandler, title: "Create new universe"}, 
             React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
           )
         )
       ), 
       React.createElement("div", {className: "row"}, 
-        React.createElement("ul", {className: "col-xs-11 col-xs-offset-1"}, 
-        this.state.universes.map(function(elem) {
-          var trash =
-            React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
-              onClick: this.destroyHandler, 
-              "data-uid": elem.uid}, 
-              React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
+        React.createElement("div", {className: "col-xs-11"}, 
+        React.createElement("ul", {style: {marginLeft: "1.5em"}}, 
+          this.state.universes.map(function(elem) {
+            var trash =
+              React.createElement("a", {href: "#", style: {marginLeft: "2em"}, 
+                onClick: this.destroyHandler, title: "Delete", 
+                "data-uid": elem.uid}, 
+                React.createElement("span", {className: "glyphicon glyphicon-trash", 
+                  "aria-hidden": "true"})
+              );
+            return React.createElement("li", {key: elem.uid+elem.title}, 
+              React.createElement("a", {href: "/universe/" + elem.uid, 
+                onClick: this.props.opts.hrefHandler, 
+                "data-uid": elem.uid}, 
+                elem.title || elem.uid
+              ), " ", elem.title ? "(" + elem.uid + ")" : "", 
+              this.state.destroy === elem.uid ?
+                React.createElement(ConfirmBox, {payload: elem.uid, callback: this.destroyCallback, 
+                close: this.toggleDestroy}, trash) : trash
             );
-          return React.createElement("li", {key: elem.uid+elem.title}, 
-            React.createElement("a", {href: "/universe/" + elem.uid, 
-              onClick: this.props.opts.hrefHandler, 
-              "data-uid": elem.uid}, 
-              elem.title || elem.uid
-            ), " ", elem.title ? "(" + elem.uid + ")" : "", 
-            this.state.destroy === elem.uid ?
-              React.createElement(ConfirmBox, {payload: elem.uid, callback: this.destroyCallback, 
-              close: this.toggleDestroy}, trash) : trash
-          );
-        }.bind(this))
+          }.bind(this))
+        )
         )
       ), 
       this.props.uid ?

@@ -65,7 +65,7 @@ var AccessKeys = React.createClass({
       <form className="form-inline" style={
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}>
         <button type="submit" className="btn btn-default"
-          onClick={this.createHandler}>
+          onClick={this.createHandler} title="Create new access key">
           <span className="glyphicon glyphicon-plus" aria-hidden="true" />
         </button>
       </form>
@@ -77,9 +77,9 @@ var AccessKeys = React.createClass({
   },
   render: function() {
     return <div className="col-xs-12 col-md-12">
-      {this.props.access_keys ?
+      {this.props.opts.can("manage") ?
         <div style={{display: "inline-block"}}>
-          <a href="#" onClick={this.toggleEditHandler}>
+          <a href="#" onClick={this.toggleEditHandler} title="Access keys">
             <span style={{fontSize: "1.4em"}}
               className="glyphicon glyphicon-lock" aria-hidden="true" />
           </a>
@@ -155,7 +155,7 @@ var AccessKey = React.createClass({
       {["read", "write", "manage"].map(function(cap) {
         var map = {read: "eye-open", write: "pencil", manage: "tower"};
         return <button type="submit" className="btn btn-default"
-          onClick={this.updateHandler} data-cap={cap}
+          onClick={this.updateHandler} title={cap} data-cap={cap}
           data-access-key={access_key} style={{marginLeft: "0.5em"}} key={cap}>
           <span className={"glyphicon glyphicon-" + map[cap]} aria-hidden="true"
             style={{color: current_cap == cap ? "#337ab7" : null}} />
@@ -170,7 +170,7 @@ var AccessKey = React.createClass({
     var trash =
       <button type="submit" className="btn btn-default"
         onClick={this.destroyHandler} data-access-key={id}
-        style={{marginLeft: "0.5em"}}>
+        style={{marginLeft: "0.5em"}} title="Delete">
         <span className="glyphicon glyphicon-trash" aria-hidden="true" />
       </button>;
     return <span style={{paddingLeft: "1em"}}>
@@ -190,17 +190,21 @@ var AccessKey = React.createClass({
   render: function() {
     if (!this.state.access_key) { return <div />; }
     return <div className="row">
-      <div className="col-xs-12 col-md-12">
+      <div className="col-sm-3" style={{marginTop: "4px"}}>
         <a href={"/key/" + this.state.access_key.id}>
           {this.state.access_key.id}
         </a> ({this.state.access_key.title || "no title"})
+      </div>
+      <div className="col-sm-1">
         <form className="form-inline" style={{display: "inline-block",
           marginLeft: "2em"}}>
           <button type="submit" className="btn btn-default"
-            onClick={this.toggleEditHandler}>
+            onClick={this.toggleEditHandler} title="Edit">
             <span className="glyphicon glyphicon-edit" aria-hidden="true" />
           </button>
         </form>
+      </div>
+      <div className="col-sm-5">
         {this.state.editable ? this.renderEdit() : <span />}
       </div>
     </div>;

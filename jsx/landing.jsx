@@ -88,8 +88,8 @@ var Landing = React.createClass({
             a story. At the moment you link the prop name in the story
             and hide the link behind a description.</p>
 
-            <p>Take your main character John J. Doe, who has the prop name
-            <i>john_j_doe</i>. Reference him in any story by adding
+            <p>Take your main character John J. Doe, who has the prop
+            name <i>john_j_doe</i>. Reference him in any story by adding
             [john_j_doe|John Doe] and he will appear as a link.</p>
 
             <p>The second option, the name for the link is a choice made
@@ -105,15 +105,25 @@ var Landing = React.createClass({
           <div className="panel-body" style={{display: "none"}}>
             <p>It is the username equivalent. If you play with a bunch of
             people, try to create as many access keys as you have players.</p>
+
+            <p>An access key can and should have a name, one for you to
+            remember who you gave the key to.</p>
           </div>
 
           <div className="panel-heading" onClick={this.collapse}>
             <h4><a href="#collapse">Are there different access rights?</a></h4>
           </div>
           <div className="panel-body" style={{display: "none"}}>
-            <p>Right, the admin and no admin setup. It is planned to add
-            a role each access key, but right now everyone is the
-            superadmin. Make backups often if you do not trust your players!</p>
+            <p>There are three access rights. Manage, write and read.</p>
+
+            <p>A manage key can do everything and anything, obviously.</p>
+
+            <p>A write key can edit names, add and remove props, stories
+            and poses, however it cannot delete a universe, see or edit
+            access keys or change his own access key name.</p>
+
+            <p>A read key can obviously just read, there is not single write
+            or manage task it can perform. Also it cannot see access keys.</p>
           </div>
 
           <div className="panel-heading" onClick={this.collapse}>
@@ -129,6 +139,8 @@ var Landing = React.createClass({
             className="glyphicon glyphicon-upload" aria-hidden="true" /> restore
             your universe with a simple button click. Just remember,
             it will wipe the universe you apply the backup to.</p>
+
+            <p>A restore also will not set up access keys for you!</p>
           </div>
         </div></div>
       </div>

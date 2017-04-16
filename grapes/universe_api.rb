@@ -80,7 +80,7 @@ module SessionHelpers
     cap = SimpleCan.strategy.to_capability("manage")
     keys = AccessKey.list(params[:uid]) - [params[:access_key]]
     if AccessKey.max_capability(keys) == cap ||
-       declared(params)[:cap] == "manage"
+       declared(params)["cap"].nil?
       return
     end
     error!({status: 409, body: "Cannot modify last manage access key"}, 409)
@@ -193,7 +193,7 @@ class UniverseApi < Grape::API
           end
 
           params do
-            optional :cap, type: String, desc: "Capability", default: "manage",
+            optional :cap, type: String, desc: "Capability",
               values: SimpleCan.strategy.roles
             optional :title, type: String, desc: "Access key title"
           end

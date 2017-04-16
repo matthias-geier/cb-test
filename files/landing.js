@@ -88,8 +88,8 @@ var Landing = React.createClass({displayName: "Landing",
             "a story. At the moment you link the prop name in the story" + ' ' +
             "and hide the link behind a description."), 
 
-            React.createElement("p", null, "Take your main character John J. Doe, who has the prop name", 
-            React.createElement("i", null, "john_j_doe"), ". Reference him in any story by adding" + ' ' +
+            React.createElement("p", null, "Take your main character John J. Doe, who has the prop" + ' ' +
+            "name ", React.createElement("i", null, "john_j_doe"), ". Reference him in any story by adding" + ' ' +
             "[john_j_doe|John Doe] and he will appear as a link."), 
 
             React.createElement("p", null, "The second option, the name for the link is a choice made" + ' ' +
@@ -104,16 +104,26 @@ var Landing = React.createClass({displayName: "Landing",
           ), 
           React.createElement("div", {className: "panel-body", style: {display: "none"}}, 
             React.createElement("p", null, "It is the username equivalent. If you play with a bunch of" + ' ' +
-            "people, try to create as many access keys as you have players.")
+            "people, try to create as many access keys as you have players."), 
+
+            React.createElement("p", null, "An access key can and should have a name, one for you to" + ' ' +
+            "remember who you gave the key to.")
           ), 
 
           React.createElement("div", {className: "panel-heading", onClick: this.collapse}, 
             React.createElement("h4", null, React.createElement("a", {href: "#collapse"}, "Are there different access rights?"))
           ), 
           React.createElement("div", {className: "panel-body", style: {display: "none"}}, 
-            React.createElement("p", null, "Right, the admin and no admin setup. It is planned to add" + ' ' +
-            "a role each access key, but right now everyone is the" + ' ' +
-            "superadmin. Make backups often if you do not trust your players!")
+            React.createElement("p", null, "There are three access rights. Manage, write and read."), 
+
+            React.createElement("p", null, "A manage key can do everything and anything, obviously."), 
+
+            React.createElement("p", null, "A write key can edit names, add and remove props, stories" + ' ' +
+            "and poses, however it cannot delete a universe, see or edit" + ' ' +
+            "access keys or change his own access key name."), 
+
+            React.createElement("p", null, "A read key can obviously just read, there is not single write" + ' ' +
+            "or manage task it can perform. Also it cannot see access keys.")
           ), 
 
           React.createElement("div", {className: "panel-heading", onClick: this.collapse}, 
@@ -128,7 +138,9 @@ var Landing = React.createClass({displayName: "Landing",
             "aria-hidden": "true"}), " and ", React.createElement("span", {
             className: "glyphicon glyphicon-upload", "aria-hidden": "true"}), " restore" + ' ' +
             "your universe with a simple button click. Just remember," + ' ' +
-            "it will wipe the universe you apply the backup to.")
+            "it will wipe the universe you apply the backup to."), 
+
+            React.createElement("p", null, "A restore also will not set up access keys for you!")
           )
         ))
       )

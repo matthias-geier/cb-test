@@ -55,17 +55,19 @@ var Session = React.createClass({
     </div>;
   },
   render: function() {
-    return <div className="col-xs-12 col-md-12">
-      <div style={{display: "inline-block"}}>
-        <a href="#" onClick={this.toggleEditHandler}>
-          <span style={{fontSize: "2em"}}
-            className="glyphicon glyphicon-user" aria-hidden="true" />
-        </a>
-      </div> <div style={{display: "inline-block", marginLeft: "0.5em"}}>
-        {this.props.children}
-      </div>
+    return <div className="row">
+      <div className="col-xs-12">
+        <div style={{display: "inline-block"}}>
+          <a href="#" onClick={this.toggleEditHandler} title="Your sessions">
+            <span style={{fontSize: "1.5em"}}
+              className="glyphicon glyphicon-user" aria-hidden="true" />
+          </a>
+        </div> <div style={{display: "inline-block", marginLeft: "0.5em"}}>
+          {this.props.children}
+        </div>
 
-      {this.state.editable ? this.renderEdit() : <div />}
+        {this.state.editable ? this.renderEdit() : <div />}
+      </div>
     </div>;
   }
 })

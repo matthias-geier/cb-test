@@ -41,7 +41,7 @@ var Title = React.createClass({displayName: "Title",
     };
     return React.createElement("div", {className: "row"}, 
       React.createElement(UniverseList, {opts: opts, uid: this.state.uid}, 
-        React.createElement("h1", {style: {display: "inline-block", lineHeight: 1.5, fontSize: "4em"}}, 
+        React.createElement("h1", {style: {display: "inline-block", lineHeight: 1.5}}, 
           React.createElement("a", {href: "#", onClick: this.hrefHandler}, 
             React.createElement("span", {style: {textTransform: "uppercase"}}, "rpuniverse"), 
             React.createElement("span", {style: {fontVariant: "small-caps"}}, ".org")

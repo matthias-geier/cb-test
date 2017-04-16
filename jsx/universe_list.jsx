@@ -71,7 +71,7 @@ var UniverseList = React.createClass({
       withState: this.props.opts.withState,
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
-      updateUniverses: this.update,
+      updateUniverses: this.updateAccessible,
       updateUniverse: this.props.opts.updateUniverse
     };
     return <div className="col-xs-12">
@@ -80,32 +80,35 @@ var UniverseList = React.createClass({
         <form className="form-inline" style={{display: "inline-block",
           verticalAlign: "middle", marginLeft: "2em"}}>
           <button type="submit" className="btn btn-default"
-            onClick={this.createHandler}>
+            onClick={this.createHandler} title="Create new universe">
             <span className="glyphicon glyphicon-plus" aria-hidden="true" />
           </button>
         </form>
       </Session>
       <div className="row">
-        <ul className="col-xs-11 col-xs-offset-1">
-        {this.state.universes.map(function(elem) {
-          var trash =
-            <a href="#" style={{marginLeft: "2em"}}
-              onClick={this.destroyHandler}
-              data-uid={elem.uid}>
-              <span className="glyphicon glyphicon-trash" aria-hidden="true" />
-            </a>;
-          return <li key={elem.uid+elem.title}>
-            <a href={"/universe/" + elem.uid}
-              onClick={this.props.opts.hrefHandler}
-              data-uid={elem.uid}>
-              {elem.title || elem.uid}
-            </a> {elem.title ? "(" + elem.uid + ")" : ""}
-            {this.state.destroy === elem.uid ?
-              <ConfirmBox payload={elem.uid} callback={this.destroyCallback}
-              close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
-          </li>;
-        }.bind(this))}
+        <div className="col-xs-11">
+        <ul style={{marginLeft: "1.5em"}}>
+          {this.state.universes.map(function(elem) {
+            var trash =
+              <a href="#" style={{marginLeft: "2em"}}
+                onClick={this.destroyHandler} title="Delete"
+                data-uid={elem.uid}>
+                <span className="glyphicon glyphicon-trash"
+                  aria-hidden="true" />
+              </a>;
+            return <li key={elem.uid+elem.title}>
+              <a href={"/universe/" + elem.uid}
+                onClick={this.props.opts.hrefHandler}
+                data-uid={elem.uid}>
+                {elem.title || elem.uid}
+              </a> {elem.title ? "(" + elem.uid + ")" : ""}
+              {this.state.destroy === elem.uid ?
+                <ConfirmBox payload={elem.uid} callback={this.destroyCallback}
+                close={this.toggleDestroy}>{trash}</ConfirmBox> : trash}
+            </li>;
+          }.bind(this))}
         </ul>
+        </div>
       </div>
       {this.props.uid ?
         <Universe opts={opts} uid={this.props.uid} key={this.props.uid} /> :

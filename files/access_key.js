@@ -65,7 +65,7 @@ var AccessKeys = React.createClass({displayName: "AccessKeys",
       React.createElement("form", {className: "form-inline", style: 
         {display: "inline-block", verticalAlign: "middle", marginLeft: "2em"}}, 
         React.createElement("button", {type: "submit", className: "btn btn-default", 
-          onClick: this.createHandler}, 
+          onClick: this.createHandler, title: "Create new access key"}, 
           React.createElement("span", {className: "glyphicon glyphicon-plus", "aria-hidden": "true"})
         )
       ), 
@@ -77,9 +77,9 @@ var AccessKeys = React.createClass({displayName: "AccessKeys",
   },
   render: function() {
     return React.createElement("div", {className: "col-xs-12 col-md-12"}, 
-      this.props.access_keys ?
+      this.props.opts.can("manage") ?
         React.createElement("div", {style: {display: "inline-block"}}, 
-          React.createElement("a", {href: "#", onClick: this.toggleEditHandler}, 
+          React.createElement("a", {href: "#", onClick: this.toggleEditHandler, title: "Access keys"}, 
             React.createElement("span", {style: {fontSize: "1.4em"}, 
               className: "glyphicon glyphicon-lock", "aria-hidden": "true"})
           )
@@ -155,7 +155,7 @@ var AccessKey = React.createClass({displayName: "AccessKey",
       ["read", "write", "manage"].map(function(cap) {
         var map = {read: "eye-open", write: "pencil", manage: "tower"};
         return React.createElement("button", {type: "submit", className: "btn btn-default", 
-          onClick: this.updateHandler, "data-cap": cap, 
+          onClick: this.updateHandler, title: cap, "data-cap": cap, 
           "data-access-key": access_key, style: {marginLeft: "0.5em"}, key: cap}, 
           React.createElement("span", {className: "glyphicon glyphicon-" + map[cap], "aria-hidden": "true", 
             style: {color: current_cap == cap ? "#337ab7" : null}})
@@ -170,7 +170,7 @@ var AccessKey = React.createClass({displayName: "AccessKey",
     var trash =
       React.createElement("button", {type: "submit", className: "btn btn-default", 
         onClick: this.destroyHandler, "data-access-key": id, 
-        style: {marginLeft: "0.5em"}}, 
+        style: {marginLeft: "0.5em"}, title: "Delete"}, 
         React.createElement("span", {className: "glyphicon glyphicon-trash", "aria-hidden": "true"})
       );
     return React.createElement("span", {style: {paddingLeft: "1em"}}, 
@@ -190,17 +190,21 @@ var AccessKey = React.createClass({displayName: "AccessKey",
   render: function() {
     if (!this.state.access_key) { return React.createElement("div", null); }
     return React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "col-xs-12 col-md-12"}, 
+      React.createElement("div", {className: "col-sm-3", style: {marginTop: "4px"}}, 
         React.createElement("a", {href: "/key/" + this.state.access_key.id}, 
           this.state.access_key.id
-        ), " (", this.state.access_key.title || "no title", ")", 
+        ), " (", this.state.access_key.title || "no title", ")"
+      ), 
+      React.createElement("div", {className: "col-sm-1"}, 
         React.createElement("form", {className: "form-inline", style: {display: "inline-block",
           marginLeft: "2em"}}, 
           React.createElement("button", {type: "submit", className: "btn btn-default", 
-            onClick: this.toggleEditHandler}, 
+            onClick: this.toggleEditHandler, title: "Edit"}, 
             React.createElement("span", {className: "glyphicon glyphicon-edit", "aria-hidden": "true"})
           )
-        ), 
+        )
+      ), 
+      React.createElement("div", {className: "col-sm-5"}, 
         this.state.editable ? this.renderEdit() : React.createElement("span", null)
       )
     );

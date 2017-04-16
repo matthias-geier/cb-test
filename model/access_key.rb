@@ -78,11 +78,17 @@ module AccessKey
   def update(access_key, fields)
     FIELDS.each { |k| fields.delete(k) }
     full_id = hash_access_key(access_key)
-    ($redis.hgetall(full_id).keys - FIELDS - fields.keys).each do |field|
+    current_fields = $redis.hgetall(full_id)
+
+    fields["cap"] =
+      if fields["cap"]
+        SimpleCan.strategy.to_capability(fields["cap"])
+      else
+        current_fields["cap"]
+      end
+    (current_fields.keys - FIELDS - fields.keys).each do |field|
       $redis.hdel(full_id, field)
     end
-
-    fields["cap"] = SimpleCan.strategy.to_capability(fields["cap"])
 
     fields.each do |field, value|
       if value.nil? || value.to_s.empty?
