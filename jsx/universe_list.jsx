@@ -7,7 +7,6 @@ var UniverseList = React.createClass({
       return;
     }
     window.history.pushState({}, "/", "/");
-    this.props.updateUniverse();
   },
   updateAccessible: function() {
     promise.get("/api/universe").then(function(err, text, xhr) {
@@ -30,6 +29,7 @@ var UniverseList = React.createClass({
         window.history.pushState({}, payload.body.uid,
           "/universe/" + payload.body.uid);
         this.props.opts.updateUniverse();
+        this.updateAccessible();
       } else {
         this.props.opts.addError(payload.body || payload.error);
       }
@@ -57,6 +57,7 @@ var UniverseList = React.createClass({
       if (xhr.status === 204) {
         this.closeUniverseIf(uid);
         this.props.opts.updateUniverse();
+        this.updateAccessible();
       } else {
         var payload = JSON.parse(text);
         this.props.opts.addError(payload.body || payload.error);

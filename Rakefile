@@ -1,4 +1,7 @@
 require "redis"
+require "simple_can"
+
+SimpleCan.strategy = SimpleCan::BasicStrategy
 Dir["model/*.rb"].each { |f| require "./#{f}" }
 
 task :redis do
