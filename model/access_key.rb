@@ -42,7 +42,9 @@ module AccessKey
   def broadcast(blacklist, payload)
     uid_keys = list(payload[:uid])
     payload[:broadcasted_at] = Time.now.to_i
-    payload[:who] = blacklist & uid_keys
+    payload[:who] = (blacklist & uid_keys).map do |key|
+      $redis.hget(hash_access_key(key), "title")
+    end
     (uid_keys - blacklist).each do |key|
       $redis.lpush(list_broadcast_access_key(key), payload.to_json)
     end
@@ -51,9 +53,12 @@ module AccessKey
   def messages(uid, access_keys)
     return (list(uid) & access_keys).reduce([]) do |acc, key|
       payloads = $redis.lrange(list_broadcast_access_key(key), 0, -1)
-      $redis.del(list_broadcast_access_key(key))
+      #$redis.del(list_broadcast_access_key(key))
       acc | payloads.map { |payload| JSON.parse(payload) }
-    end.sort { |payload| payload[:broadcased_at] }
+    end.sort { |payload| payload["broadcasted_at"] }.map do |payload|
+      payload["updated_at"] = Time.at(payload["broadcasted_at"].to_i).utc
+      next payload
+    end
   end
 
   def list_uids(access_keys)

@@ -37,9 +37,9 @@ end
 module MessageHelpers
   extend Grape::API::Helpers
 
-  def broadcast!
+  def broadcast!(payload={})
     action = {"PUT" => "update", "POST" => "create", "DELETE" => "delete"}
-    payload = {action: action[route.options[:method]]}
+    payload = payload.merge(action: action[route.options[:method]])
     payload[:scope] = route.options[:namespace].split("/").grep(/^[^:]/).last
     [:uid, :sid, :access_key, :pid].each do |elem|
       payload[elem] = params[elem] if params.key?(elem)
@@ -162,7 +162,7 @@ class UniverseApi < Grape::API
       put do
         write!
         data = Universe.update(params[:uid], declared(params))
-        broadcast!
+        broadcast!(declared(params))
         {status: 200, body: data}
       end
 
@@ -230,7 +230,6 @@ class UniverseApi < Grape::API
       post "restore" do
         manage!
         Universe.restore(params[:uid], params[:data])
-        broadcast!
         {status: 200, body: true}
       end
 
@@ -254,7 +253,7 @@ class UniverseApi < Grape::API
             error!({status: 400, body: "Prop id must be shorter than 25"}, 400)
           end
           validate_params!
-          broadcast!
+          broadcast!(params.to_h)
           status(201)
           {status: 201, body: Prop.create(params[:uid], params)}
         end
@@ -276,7 +275,7 @@ class UniverseApi < Grape::API
             write!
             validate_params!
             data = Prop.update(params[:uid], params[:pid], params)
-            broadcast!
+            broadcast!(params.to_h)
             {status: 200, body: data}
           end
 
@@ -302,7 +301,7 @@ class UniverseApi < Grape::API
         put "swap" do
           write!
           Story.swap_story(params[:uid], params[:num])
-          broadcast!
+          broadcast!(declared(params))
           {status: 200, body: Story.list(params[:uid])}
         end
 
@@ -311,7 +310,7 @@ class UniverseApi < Grape::API
         end
         post do
           write!
-          broadcast!
+          broadcast!(declared(params))
           status(201)
           {status: 201, body: Story.create(params[:uid], declared(params))}
         end
@@ -348,7 +347,7 @@ class UniverseApi < Grape::API
           end
           put do
             data = Story.update(params[:uid], params[:sid], declared(params))
-            broadcast!
+            broadcast!(declared(params))
             {status: 200, body: data}
           end
 
@@ -359,34 +358,37 @@ class UniverseApi < Grape::API
             ""
           end
 
-          params do
-            requires :pose, type: String, regexp: /\A.+\z/m,
-              desc: "Pose text"
-          end
-          post "pose" do
-            broadcast!
-            status(201)
-            {status: 201, body: Story.pose(params[:uid], params[:sid],
-              params[:pose])}
-          end
+          namespace "pose" do
+            params do
+              requires :pose, type: String, regexp: /\A.+\z/m,
+                desc: "Pose text"
+            end
+            post do
+              story = Story.pose(params[:uid], params[:sid], params[:pose])
+              broadcast!(title: story["title"], num: story["poses"].last.first)
+              status(201)
+              {status: 201, body: story}
+            end
 
-          params do
-            requires :num, type: String, desc: "Pose num"
-          end
-          delete "pose" do
-            Story.unpose(params[:uid], params[:sid], params[:num])
-            broadcast!
-            status(204)
-            ""
-          end
+            params do
+              requires :num, type: String, desc: "Pose num"
+            end
+            delete do
+              story = Story.unpose(params[:uid], params[:sid], params[:num])
+              broadcast!(title: story["title"], num: params[:num])
+              status(204)
+              ""
+            end
 
-          params do
-            requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
-          end
-          put "pose/swap" do
-            Story.swap_pose(params[:uid], params[:sid], params[:num])
-            broadcast!
-            {status: 200, body: Story.to_h(params[:uid], params[:sid])}
+            params do
+              requires :num, type: String, regexp: /\A\d+\z/, desc: "Pose num"
+            end
+            put "swap" do
+              Story.swap_pose(params[:uid], params[:sid], params[:num])
+              story = Story.to_h(params[:uid], params[:sid])
+              broadcast!(title: story["title"], num: params[:num])
+              {status: 200, body: story}
+            end
           end
         end
       end

@@ -1,6 +1,6 @@
 var Universe = React.createClass({displayName: "Universe",
   getInitialState: function() {
-    return {};
+    return {messages: []};
   },
   toggleEditHandler: function(e) {
     e.preventDefault();
@@ -12,6 +12,19 @@ var Universe = React.createClass({displayName: "Universe",
       delete(state.editable);
     } else {
       state.editable = true;
+    }
+    this.setState(state);
+  },
+  toggleViewMessageHandler: function(e) {
+    e.preventDefault();
+    this.toggleViewMessages();
+  },
+  toggleViewMessages: function() {
+    var state = this.state;
+    if (state.view_messages) {
+      delete(state.view_messages);
+    } else {
+      state.view_messages = true;
     }
     this.setState(state);
   },
@@ -49,6 +62,20 @@ var Universe = React.createClass({displayName: "Universe",
         this.toggleEdit();
         var state = this.state;
         state.universe = payload.body;
+        this.setState(state);
+      } else {
+        this.props.opts.addError(payload.body || payload.error);
+      }
+    }.bind(this));
+  },
+  messageHandler: function() {
+    promise.get("/api/universe/" + this.props.uid + "/messages").
+      then(function(err, text, xhr) {
+
+      var payload = JSON.parse(text);
+      if (xhr.status === 200) {
+        var state = this.state;
+        state.messages = state.messages.concat(payload.body);
         this.setState(state);
       } else {
         this.props.opts.addError(payload.body || payload.error);
@@ -107,7 +134,8 @@ var Universe = React.createClass({displayName: "Universe",
       addError: this.props.opts.addError,
       reqUrl: this.props.opts.reqUrl,
       updateUniverse: this.update,
-      can: this.can
+      can: this.can,
+      fetchMessages: this.fetchMessages
     };
 
     var universe = this.state.universe;
@@ -145,9 +173,15 @@ var Universe = React.createClass({displayName: "Universe",
               React.createElement("span", {className: "glyphicon glyphicon-edit", "aria-hidden": "true"})
             )
           ) :
-          ""
+          "", 
+        React.createElement(MessageBox, {num: this.state.messages.length, 
+          callback: this.toggleViewMessageHandler}), 
+        React.createElement(RefreshBox, {callback: this.messageHandler})
       ), 
       this.state.editable ? this.renderEdit() : React.createElement("div", null), 
+      this.state.view_messages ?
+        React.createElement(MessageView, {opts: opts, messages: this.state.messages}) :
+        React.createElement("div", null), 
 
       React.createElement(UniverseMenu, {opts: opts, callback: this.handleHref}, 
         React.createElement(PropList, {uid: this.props.uid, props: universe.props, 
