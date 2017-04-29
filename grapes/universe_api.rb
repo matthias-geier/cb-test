@@ -310,9 +310,10 @@ class UniverseApi < Grape::API
         end
         post do
           write!
-          broadcast!(declared(params))
+          story = Story.create(params[:uid], declared(params))
+          broadcast!(declared(params).merge(sid: story["sid"]))
           status(201)
-          {status: 201, body: Story.create(params[:uid], declared(params))}
+          {status: 201, body: story}
         end
 
         params do

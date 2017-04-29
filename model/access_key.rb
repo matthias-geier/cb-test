@@ -56,7 +56,7 @@ module AccessKey
       #$redis.del(list_broadcast_access_key(key))
       acc | payloads.map { |payload| JSON.parse(payload) }
     end.sort { |payload| payload["broadcasted_at"] }.map do |payload|
-      payload["updated_at"] = Time.at(payload["broadcasted_at"].to_i).utc
+      payload["broadcasted_at"] = Time.at(payload["broadcasted_at"].to_i).utc
       next payload
     end
   end
