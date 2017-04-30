@@ -53,7 +53,7 @@ module AccessKey
   def messages(uid, access_keys)
     return (list(uid) & access_keys).reduce([]) do |acc, key|
       payloads = $redis.lrange(list_broadcast_access_key(key), 0, -1)
-      #$redis.del(list_broadcast_access_key(key))
+      $redis.del(list_broadcast_access_key(key))
       acc | payloads.map { |payload| JSON.parse(payload) }
     end.sort { |payload| payload["broadcasted_at"] }.map do |payload|
       payload["broadcasted_at"] = Time.at(payload["broadcasted_at"].to_i).utc

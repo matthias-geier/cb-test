@@ -180,7 +180,8 @@ var Universe = React.createClass({displayName: "Universe",
       ), 
       this.state.editable ? this.renderEdit() : React.createElement("div", null), 
       this.state.view_messages ?
-        React.createElement(MessageView, {opts: opts, messages: this.state.messages}) :
+        React.createElement(MessageView, {opts: opts, messages: this.state.messages, 
+          toggle: this.toggleViewMessageHandler}) :
         React.createElement("div", null), 
 
       React.createElement(UniverseMenu, {opts: opts, callback: this.handleHref}, 

@@ -180,7 +180,8 @@ var Universe = React.createClass({
       </AccessKeys>
       {this.state.editable ? this.renderEdit() : <div />}
       {this.state.view_messages ?
-        <MessageView opts={opts} messages={this.state.messages} /> :
+        <MessageView opts={opts} messages={this.state.messages}
+          toggle={this.toggleViewMessageHandler} /> :
         <div />}
 
       <UniverseMenu opts={opts} callback={this.handleHref}>

@@ -25,7 +25,10 @@ task reports: :redis do
   universes.reverse!
   puts "universe count: #{universes.count}"
   universes.each do |universe|
-    puts "universe #{universe["title"]} #{universe["uid"]} #{universe["updated_at"]} - prop count #{universe["props"].count} - story count #{universe["stories"].count} - access #{universe["access_keys"].first}"
+    puts "universe #{universe["title"]} #{universe["uid"]} " \
+      "#{universe["updated_at"]} - prop count #{universe["props"].count} - " \
+      "story count #{universe["stories"].count} - " \
+      "access #{AccessKey.list(universe["uid"]).first}"
   end
 end
 

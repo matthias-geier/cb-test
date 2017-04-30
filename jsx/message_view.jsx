@@ -1,6 +1,7 @@
 var MessageView = React.createClass({
   openUrl: function(e) {
     e.preventDefault();
+    this.props.toggle(e);
     window.history.pushState({}, e.currentTarget.dataset.uid,
       e.currentTarget.href);
     this.props.opts.updateUniverse();
